@@ -8,5 +8,12 @@ class Settings(BaseSettings):
     INNOSCREAM_BOT_TOKEN: str
     DATABASE_URL: str = "sqlite:///database.db"
 
+    PROJECT_NAME: str = "InnoScream"
+    PROJECT_DESCRIPTION: str = (
+        "Toy project for Innopolis University S25 "
+        '"Software Quality, Reliability and Security" course'
+    )
+    PROJECT_VERSION: str = "0.1.0"
+
 
 settings = Settings()  # type: ignore

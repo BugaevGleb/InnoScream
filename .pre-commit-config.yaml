@@ -13,8 +13,9 @@ repos:
       - id: flake8
         name: flake8 (with radon in custom config)
         entry: poetry run flake8
-        language: python
+        language: system
         types: [python]
+        pass_filenames: false
 
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.3.0
