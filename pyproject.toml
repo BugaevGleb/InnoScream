@@ -34,6 +34,19 @@ mutmut = "^3.2.3"
 pydocstyle = "^6.3.0"
 radon = "^6.0.1"
 pre-commit = "^4.2.0"
+flake8-pyproject = "^1.2.3"
+
+[tool.flake8]
+# through Flake8-pyproject
+radon-max-cc = 10
+
+[tool.bandit]
+severity-level = "high"
+skips = ["B101", "B311"]
+
+[tool.pydocstyle]
+convention = "google"
+add_ignore = ["D100", "D101", "D104"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
