@@ -6,6 +6,7 @@ class Settings(BaseSettings):
 
     INNOSCREAM_API_KEY: str
     INNOSCREAM_BOT_TOKEN: str
+    INNOSCREAM_CHANNEL_ID: int
     DATABASE_URL: str = "sqlite:///db.sqlite3"
 
     PROJECT_NAME: str = "InnoScream"
