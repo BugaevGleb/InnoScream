@@ -1,3 +1,4 @@
+import hashlib
 import logging
 
 import httpx
@@ -12,7 +13,7 @@ from app.bot.messages import (
     SUCCESS_MESSAGE,
 )
 from app.core.config import settings
-from app.core.schemas import Reaction, ReactionUpdate
+from app.core.schemas import Reaction, ReactionUpdate, UserMessage
 
 logger = logging.getLogger(__name__)
 
@@ -50,15 +51,37 @@ async def handle_scream_command(message: Message, bot: Bot):
         await message.reply(INVALID_TEXT)
         return
 
+    user_message = UserMessage(
+        message_id=message.message_id,
+        user_id=hashlib.sha256(str(message.from_user.id).encode()).hexdigest(),
+        message=scream_text,
+        created_at=message.date,
+    )
+
     try:
         await bot.send_message(
             chat_id=settings.INNOSCREAM_CHANNEL_ID,
             text=scream_text,
             disable_web_page_preview=True,
         )
+        try:
+            async with httpx.AsyncClient(
+                timeout=settings.HTTP_TIMEOUT
+            ) as client:
+                response = await client.post(
+                    url=f"{settings.INNOSCREAM_API_URL}/user_messages",
+                    json=user_message.model_dump(mode="json"),
+                )
+                response.raise_for_status()
+        except Exception as e:
+            logger.exception(
+                "Error occurred while sending message to API: %s",
+                e,
+            )
         await message.reply(SUCCESS_MESSAGE)
         logger.info(
-            "Successfully sent scream to channel %s",
+            "Successfully sent scream message with id %s to channel %s",
+            message.message_id,
             settings.INNOSCREAM_CHANNEL_ID,
         )
     except Exception as e:
@@ -88,19 +111,14 @@ async def handle_reaction_count(message: MessageReactionCountUpdated):
     )
     logger.info("Reaction update: %s", reaction_update)
     try:
-        async with httpx.AsyncClient(timeout=3) as client:
+        async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
             response = await client.put(
                 url=f"{settings.INNOSCREAM_API_URL}/reactions",
                 json=reaction_update.model_dump(mode="json"),
             )
             response.raise_for_status()
-    except httpx.TimeoutException as e:
+    except Exception as e:
         logger.exception(
-            "Timeout occurred while updating the reaction count: %s",
-            e,
-        )
-    except httpx.HTTPStatusError as e:
-        logger.exception(
-            "HTTP error occurred while updating the reaction count: %s",
+            "Error occurred while updating the reaction count API: %s",
             e,
         )

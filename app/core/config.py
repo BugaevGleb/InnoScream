@@ -4,6 +4,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Application settings."""
 
+    HTTP_TIMEOUT: int = 3
+
     INNOSCREAM_API_URL: str = "http://127.0.0.1:8000"
 
     INNOSCREAM_BOT_TOKEN: str

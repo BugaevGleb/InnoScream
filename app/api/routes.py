@@ -6,13 +6,73 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from app.core.database import get_db_session
-from app.core.models import Reaction as ReactionDB
-from app.core.schemas import ReactionResponse, ReactionUpdate
+from app.core.models import (
+    Reaction as ReactionDB,
+)
+from app.core.models import (
+    UserMessage as UserMessageDB,
+)
+from app.core.schemas import ReactionResponse, ReactionUpdate, UserMessage
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
+
+
+@router.post("/user_messages", response_model=UserMessage)
+async def create_user_message(user_message: UserMessage, session: SessionDep):
+    """Create a new user message in the database."""
+    stmt = select(UserMessageDB).where(
+        UserMessageDB.message_id == user_message.message_id
+    )
+    result = await session.execute(stmt)
+    db_message = result.scalar_one_or_none()
+    if db_message:
+        logger.info(
+            "Skipping user message for message_id %s: message already exists",
+            user_message.message_id,
+        )
+        return db_message
+
+    user_message_db = UserMessageDB(
+        message_id=user_message.message_id,
+        user_id=user_message.user_id,
+        message=user_message.message,
+        created_at=user_message.created_at,
+    )
+    session.add(user_message_db)
+
+    try:
+        await session.commit()
+        await session.refresh(user_message_db)
+        return user_message_db
+    except Exception as e:
+        await session.rollback()
+        logger.exception(
+            (
+                "Database error during user message creation "
+                "for message_id %s: %s"
+            ),
+            user_message.message_id,
+            e,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
+
+
+@router.get("/user_messages/{message_id}", response_model=UserMessage)
+async def get_user_message(message_id: int, session: SessionDep):
+    """Get a user message by message ID."""
+    db_message = await session.get(UserMessageDB, message_id)
+    if db_message is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User message not found",
+        )
+    return db_message
 
 
 @router.put("/reactions", response_model=ReactionResponse)
