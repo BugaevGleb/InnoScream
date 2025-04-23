@@ -1,11 +1,9 @@
 import logging
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import select
 
-from app.core.database import get_db_session
+from app.api.dependencies import SessionDep
 from app.core.models import (
     Reaction as ReactionDB,
 )
@@ -16,8 +14,6 @@ from app.core.schemas import ReactionResponse, ReactionUpdate, UserMessage
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-SessionDep = Annotated[AsyncSession, Depends(get_db_session)]
 
 
 @router.post("/user_messages", response_model=UserMessage)
