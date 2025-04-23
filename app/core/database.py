@@ -1,22 +1,49 @@
-from typing import Generator
+import logging
+from typing import AsyncGenerator
 
-from sqlmodel import Session, SQLModel, create_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.orm import declarative_base
 
 from app.core.config import settings
 
-engine = create_engine(settings.DATABASE_URL)
+logger = logging.getLogger(__name__)
+
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    connect_args={"check_same_thread": False}
+    if "sqlite" in settings.DATABASE_URL
+    else {},
+)
+
+AsyncSessionFactory = async_sessionmaker(
+    engine, autoflush=False, expire_on_commit=False, class_=AsyncSession
+)
+
+Base = declarative_base()
 
 
-def create_db_and_tables() -> None:
-    """Create all tables in the database."""
-    SQLModel.metadata.create_all(engine)
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency for FastAPI to provide a database session."""
+    async with AsyncSessionFactory() as session:
+        try:
+            yield session
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            pass
 
 
-def get_session() -> Generator[Session, None, None]:
-    """Get a session for the database.
-
-    Returns:
-        A generator of sessions for the database.
-    """
-    with Session(engine) as session:
-        yield session
+async def create_db_and_tables():
+    """Creates database tables based on the defined models."""
+    async with engine.begin() as conn:
+        logger.info("Dropping existing tables (if any)...")
+        await conn.run_sync(Base.metadata.drop_all)
+        logger.info("Creating tables...")
+        await conn.run_sync(Base.metadata.create_all)
+        logger.info("Tables created.")

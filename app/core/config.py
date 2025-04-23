@@ -2,12 +2,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env")
+    """Application settings."""
 
-    INNOSCREAM_API_KEY: str
+    INNOSCREAM_API_URL: str = "http://127.0.0.1:8000"
+
     INNOSCREAM_BOT_TOKEN: str
     INNOSCREAM_CHANNEL_ID: int
-    DATABASE_URL: str = "sqlite:///db.sqlite3"
+
+    DATABASE_URL: str = "sqlite+aiosqlite:///./db.sqlite3"
+
+    INNOSCREAM_API_KEY: str
 
     PROJECT_NAME: str = "InnoScream"
     PROJECT_DESCRIPTION: str = (
@@ -16,5 +20,11 @@ class Settings(BaseSettings):
     )
     PROJECT_VERSION: str = "0.1.0"
 
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
-settings = Settings()  # type: ignore
+
+settings = Settings()

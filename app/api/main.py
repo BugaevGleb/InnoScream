@@ -7,7 +7,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 from app.core.config import settings
 from app.core.database import create_db_and_tables
-# TODO: add import of models here, so they get initialized
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,7 +23,7 @@ async def lifespan(_: FastAPI):
         _: FastAPI instance
     """
     logger.info("Initializing database")
-    create_db_and_tables()
+    await create_db_and_tables()
     logger.info("Starting application")
     yield
     logger.info("Shutting down application")

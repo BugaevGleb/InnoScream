@@ -1,8 +1,9 @@
 import logging
 
+import httpx
 from aiogram import Bot, Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, MessageReactionCountUpdated
 
 from app.bot.messages import (
     ERROR_MESSAGE,
@@ -11,6 +12,7 @@ from app.bot.messages import (
     SUCCESS_MESSAGE,
 )
 from app.core.config import settings
+from app.core.schemas import Reaction, ReactionUpdate
 
 logger = logging.getLogger(__name__)
 
@@ -65,3 +67,40 @@ async def handle_scream_command(message: Message, bot: Bot):
             e,
         )
         await message.reply(ERROR_MESSAGE)
+
+
+@router.message_reaction_count()
+async def handle_reaction_count(message: MessageReactionCountUpdated):
+    """Handles the message reaction count.
+
+    Args:
+        message: The message object containing the reaction count.
+    """
+    reaction_update = ReactionUpdate(
+        message_id=message.message_id,
+        changed_at=message.date,
+        reactions=[
+            Reaction(
+                type=reaction.type.emoji, total_count=reaction.total_count
+            )
+            for reaction in message.reactions
+        ],
+    )
+    logger.info("Reaction update: %s", reaction_update)
+    try:
+        async with httpx.AsyncClient(timeout=3) as client:
+            response = await client.put(
+                url=f"{settings.INNOSCREAM_API_URL}/reactions",
+                json=reaction_update.model_dump(mode="json"),
+            )
+            response.raise_for_status()
+    except httpx.TimeoutException as e:
+        logger.exception(
+            "Timeout occurred while updating the reaction count: %s",
+            e,
+        )
+    except httpx.HTTPStatusError as e:
+        logger.exception(
+            "HTTP error occurred while updating the reaction count: %s",
+            e,
+        )
