@@ -11,6 +11,7 @@ During the first week of the work on this project we discussed all features and 
 3. Memes (once per day) along with statistics graphs (once per week) will be published to the channel.
 4. Admins can reply to particular post with text "/delete" to remove this post from the channel.
 5. There is no 💀 emoji in usual (not premium) telegram channels, so we replaced it with 😭 emoji.
+6. "No critical vulnerabilities (Bandit)" from the task statement means no HIGH severity-level vulnerabilities detected by Bandit.
 
 ---
 
