@@ -17,7 +17,7 @@ from app.core.models import (
 )
 from app.core.schemas import ReactionResponse, ReactionUpdate, UserMessage
 from app.api.schemas import DailyCount, WeeklyStatsResponse, AllStatsResponse
-from sqlalchemy import func, select, cast
+
 import httpx
 from app.core.config import settings
 
@@ -226,37 +226,48 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
 
     # 1. Parse and validate the date string
     try:
-        target_date = datetime.datetime.strptime(target_date_str, "%Y-%m-%d").date()
+        target_date = datetime.datetime.strptime(
+            target_date_str, "%Y-%m-%d"
+        ).date()
     except ValueError:
         logger.error(f"Invalid date format provided: {target_date_str}")
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+        raise HTTPException(
+            status_code=400, detail="Invalid date format. Use YYYY-MM-DD."
+        )
 
     # 2. Create timezone-aware datetime boundaries for the query (UTC)
     try:
-        start_datetime_utc = datetime.datetime.combine(target_date, datetime.time.min, tzinfo=datetime.timezone.utc)
+        start_datetime_utc = datetime.datetime.combine(
+            target_date, datetime.time.min, tzinfo=datetime.timezone.utc
+        )
         end_datetime_utc = start_datetime_utc + datetime.timedelta(days=1)
-        logger.info(f"Querying count from {start_datetime_utc} to {end_datetime_utc}")
+        logger.info(
+            f"Querying count from {start_datetime_utc} to {end_datetime_utc}"
+        )
     except Exception as e:
         logger.exception("Error creating date boundaries: %s", e)
-        raise HTTPException(status_code=500, detail="Error creating date boundaries")
+        raise HTTPException(
+            status_code=500, detail="Error creating date boundaries"
+        )
 
     # 3. Execute the database query
     try:
-        stmt = (
-            select(func.count(UserMessageDB.message_id))
-            .where(
-                UserMessageDB.created_at >= start_datetime_utc,
-                UserMessageDB.created_at < end_datetime_utc
-            )
+        stmt = select(func.count(UserMessageDB.message_id)).where(
+            UserMessageDB.created_at >= start_datetime_utc,
+            UserMessageDB.created_at < end_datetime_utc,
         )
         result = await session.execute(stmt)
-        count = result.scalar_one_or_none() or 0 # Use scalar_one_or_none and default to 0
+        count = (
+            result.scalar_one_or_none() or 0
+        )  # Use scalar_one_or_none and default to 0
 
         logger.info(f"Count for {target_date_str}: {count}")
         return count
 
     except Exception as e:
-        logger.exception(f"Database error fetching stats for {target_date_str}: %s", e)
+        logger.exception(
+            f"Database error fetching stats for {target_date_str}: %s", e
+        )
         raise HTTPException(status_code=500, detail="Database query failed")
 
 
@@ -270,10 +281,16 @@ async def get_weekly_stats_via_daily():
     try:
         now_utc = datetime.datetime.now(datetime.timezone.utc)
         today_utc = now_utc.date()
-        all_dates = [today_utc - datetime.timedelta(days=i) for i in range(6, -1, -1)] # Past 6 days + today
+        all_dates = [
+            today_utc - datetime.timedelta(days=i) for i in range(6, -1, -1)
+        ]  # Past 6 days + today
     except Exception as e:
-        logger.exception("Error calculating date range for weekly stats: %s", e)
-        raise HTTPException(status_code=500, detail="Error calculating date range")
+        logger.exception(
+            "Error calculating date range for weekly stats: %s", e
+        )
+        raise HTTPException(
+            status_code=500, detail="Error calculating date range"
+        )
 
     # 2. Call daily endpoint for each date
     async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
@@ -281,12 +298,14 @@ async def get_weekly_stats_via_daily():
             date_str = current_date.strftime("%Y-%m-%d")
             logger.info(f"Fetching stats for date: {date_str}")
             daily_url = f"{settings.INNOSCREAM_API_URL}/stats/daily/{date_str}"
-            count = 0 # Default count if API call fails
+            count = 0  # Default count if API call fails
             try:
                 response = await client.get(daily_url)
-                response.raise_for_status() # Raise exception for 4xx/5xx errors
-                count = response.json() # Expecting an integer count
-                logger.debug(f"Successfully fetched count for {date_str}: {count}")
+                response.raise_for_status()  # Raise exception for 4xx/5xx errors
+                count = response.json()  # Expecting an integer count
+                logger.debug(
+                    f"Successfully fetched count for {date_str}: {count}"
+                )
             except httpx.HTTPStatusError as e:
                 # Log errors from the daily endpoint but continue, using count=0
                 logger.warning(
@@ -294,7 +313,9 @@ async def get_weekly_stats_via_daily():
                 )
             except Exception as e:
                 # Log other errors but continue, using count=0
-                logger.exception(f"Error calling daily stats for {date_str}: {e}")
+                logger.exception(
+                    f"Error calling daily stats for {date_str}: {e}"
+                )
 
             # Append result for the day
             response_stats.append(
@@ -314,10 +335,12 @@ async def get_all_time_stats(session: SessionDep):
     stmt = (
         select(
             cast(UserMessageDB.created_at, func.date()).label("date"),
-            func.count(UserMessageDB.message_id).label("count")
+            func.count(UserMessageDB.message_id).label("count"),
         )
         .group_by(cast(UserMessageDB.created_at, func.date()))
-        .order_by(cast(UserMessageDB.created_at, func.date())) # Order chronologically
+        .order_by(
+            cast(UserMessageDB.created_at, func.date())
+        )  # Order chronologically
     )
 
     result = await session.execute(stmt)
@@ -336,7 +359,11 @@ async def get_all_time_stats(session: SessionDep):
 @router.get("/stats/{user_id}", response_model=int)
 async def get_user_stats(user_id: str, session: SessionDep):
     """Get the total number of messages posted by a specific user."""
-    stmt = select(func.count()).select_from(UserMessageDB).where(UserMessageDB.user_id == user_id)
+    stmt = (
+        select(func.count())
+        .select_from(UserMessageDB)
+        .where(UserMessageDB.user_id == user_id)
+    )
     result = await session.execute(stmt)
     count = result.scalar_one_or_none()
 

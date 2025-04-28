@@ -49,7 +49,15 @@ async def weekly_chart_scheduler(bot: Bot):
 
         # Calculate the exact datetime for next Monday 8:00 UTC
         next_run_date = (now + timedelta(days=days_until_monday)).date()
-        target_time = datetime(next_run_date.year, next_run_date.month, next_run_date.day, 8, 0, 0, tzinfo=timezone.utc)
+        target_time = datetime(
+            next_run_date.year,
+            next_run_date.month,
+            next_run_date.day,
+            8,
+            0,
+            0,
+            tzinfo=timezone.utc,
+        )
 
         # sleep_seconds = (target_time - now).total_seconds()
         sleep_seconds = 10
@@ -58,8 +66,10 @@ async def weekly_chart_scheduler(bot: Bot):
         if sleep_seconds < 0:
             # This might happen if the calculation is slightly off or clock changes
             # Skip this run and wait for the next cycle
-            logger.warning("Calculated sleep time is negative, skipping this weekly chart run.")
-            await asyncio.sleep(60) # Sleep for a minute before recalculating
+            logger.warning(
+                "Calculated sleep time is negative, skipping this weekly chart run."
+            )
+            await asyncio.sleep(60)  # Sleep for a minute before recalculating
             continue
 
         logger.info(

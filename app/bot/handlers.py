@@ -145,7 +145,9 @@ async def handle_stats_command(message: Message):
         if e.response.status_code == 404:
             # Handle case where user has no messages yet
             await message.reply(STATS_MESSAGE.format(count=0))
-            logger.info("No stats found for user %s, returning 0.", user_id_hashed)
+            logger.info(
+                "No stats found for user %s, returning 0.", user_id_hashed
+            )
         else:
             logger.exception(
                 "HTTP error occurred while getting stats for user %s: %s",
