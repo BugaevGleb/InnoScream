@@ -1,18 +1,11 @@
 import logging
 from datetime import date, datetime, timezone
 
+import httpx
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
-from sqlalchemy import func, select
 
 from app.core.config import settings
-from app.core.database import AsyncSessionFactory
-from app.core.models import (
-    Reaction as ReactionDB,
-)
-from app.core.models import (
-    UserMessage as UserMessageDB,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -30,38 +23,31 @@ async def get_best_message_id(today: date | None = None) -> int | None:
     if today is None:
         today = datetime.now(timezone.utc).date()
 
-    async with AsyncSessionFactory() as session:
-        stmt = (
-            select(ReactionDB)
-            .join(
-                UserMessageDB,
-                UserMessageDB.message_id == ReactionDB.message_id,
+    try:
+        async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
+            response = await client.get(
+                url=f"{settings.INNOSCREAM_API_URL}/user_messages/best",
+                params={"today": today},
             )
-            .where(func.date(UserMessageDB.created_at) == today)
-        )
-        result = await session.execute(stmt)
-        reactions = result.scalars().all()
-
-        if not reactions:
-            logger.warn("No reactions found for today.")
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            logger.warning(
+                "No reactions found for today %s",
+                today,
+            )
             return None
-
-        logger.info(f"Found {len(reactions)} reactions today.")
-
-        message_reaction_sums = {
-            reaction.message_id: sum(
-                r.get("total_count", 0) for r in reaction.reactions
-            )
-            for reaction in reactions
-        }
-        logger.info(f"Message reaction sums: {message_reaction_sums}")
-
-        best_message_id = max(
-            message_reaction_sums, key=message_reaction_sums.get
+        logger.exception(
+            "HTTP error occurred while getting best message: %s",
+            e,
         )
-
-        logger.info(f"Best message_id selected: {best_message_id}")
-        return best_message_id
+    except Exception as e:
+        logger.exception(
+            "Error occurred while getting best message: %s",
+            e,
+        )
+    return None
 
 
 async def pin_best_message(bot: Bot, today: date | None = None):
@@ -77,32 +63,38 @@ async def pin_best_message(bot: Bot, today: date | None = None):
         logger.info("No messages to pin.")
         return
 
+    logger.info("Pinning message %s", best_message_id)
+
     try:
         await bot.pin_chat_message(
             chat_id=settings.INNOSCREAM_CHANNEL_ID,
             message_id=best_message_id,
             disable_notification=True,
         )
-        logger.info(f"Pinned message {best_message_id} successfully.")
+        logger.info("Pinned message %s successfully.", best_message_id)
     except TelegramBadRequest as e:
         if "MESSAGE_ID_INVALID" in str(e):
             logger.warning(
                 "Message %s not found or deleted. Removing from DB.",
                 best_message_id,
             )
-            async with AsyncSessionFactory() as session:
-                stmt = select(ReactionDB).where(
-                    ReactionDB.message_id == best_message_id
-                )
-                result = await session.execute(stmt)
-                db_reaction = result.scalar_one_or_none()
-                if db_reaction:
-                    await session.delete(db_reaction)
-                    await session.commit()
-                    logger.info(
-                        "Deleted reaction log for message %s from DB.",
-                        best_message_id,
+            try:
+                async with httpx.AsyncClient(
+                    timeout=settings.HTTP_TIMEOUT
+                ) as client:
+                    response = await client.delete(
+                        url=(
+                            f"{settings.INNOSCREAM_API_URL}/user_messages"
+                            f"/{best_message_id}"
+                        )
                     )
+                    response.raise_for_status()
+            except Exception as e:
+                logger.exception(
+                    "Error occurred while deleting message %s: %s",
+                    best_message_id,
+                    e,
+                )
         else:
             logger.exception(
                 "Failed to pin message %s: %s",

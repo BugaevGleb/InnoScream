@@ -1,8 +1,8 @@
 import logging
-from datetime import timezone
+from datetime import date, timezone
 
 from fastapi import APIRouter, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.api.dependencies import SessionDep
 from app.core.models import (
@@ -60,6 +60,38 @@ async def create_user_message(user_message: UserMessage, session: SessionDep):
         )
 
 
+@router.get("/user_messages/best", response_model=int)
+async def get_best_message(session: SessionDep, today: date):
+    """Retrieve the message id with the most reactions from the database."""
+    stmt = (
+        select(ReactionDB)
+        .join(
+            UserMessageDB,
+            UserMessageDB.message_id == ReactionDB.message_id,
+        )
+        .where(func.date(UserMessageDB.created_at) == today)
+    )
+    result = await session.execute(stmt)
+    reactions = result.scalars().all()
+    if not reactions:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No reactions found for today",
+        )
+
+    message_reaction_sums = {
+        reaction.message_id: sum(
+            r.get("total_count", 0) for r in reaction.reactions
+        )
+        for reaction in reactions
+    }
+    logger.info(
+        "Message reaction sums %s for date %s", message_reaction_sums, today
+    )
+
+    return max(message_reaction_sums, key=message_reaction_sums.get)
+
+
 @router.get("/user_messages/{message_id}", response_model=UserMessage)
 async def get_user_message(message_id: int, session: SessionDep):
     """Get a user message by message ID."""
@@ -70,6 +102,35 @@ async def get_user_message(message_id: int, session: SessionDep):
             detail="User message not found",
         )
     return db_message
+
+
+@router.delete("/user_messages/{message_id}")
+async def delete_user_message(message_id: int, session: SessionDep):
+    """Delete a user message by message ID."""
+    db_message = await session.get(UserMessageDB, message_id)
+    db_reaction = await session.get(ReactionDB, message_id)
+    if db_message is None and db_reaction is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User message and reaction not found",
+        )
+    try:
+        if db_message is not None:
+            await session.delete(db_message)
+        if db_reaction is not None:
+            await session.delete(db_reaction)
+        await session.commit()
+    except Exception as e:
+        await session.rollback()
+        logger.exception(
+            "Database error during deletion for message_id %s: %s",
+            message_id,
+            e,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database operation failed",
+        )
 
 
 @router.put("/reactions", response_model=ReactionResponse)
