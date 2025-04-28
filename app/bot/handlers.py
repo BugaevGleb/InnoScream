@@ -12,9 +12,11 @@ from app.bot.messages import (
     PIN_MESSAGE,
     START_MESSAGE,
     SUCCESS_MESSAGE,
+    MEME_MESSAGE,
     STATS_MESSAGE,
 )
 from app.bot.pin_most_voted import pin_best_message
+from app.bot.meme_publisher import generate_and_publish_meme
 from app.core.config import settings
 from app.core.schemas import Reaction, ReactionUpdate, UserMessage
 
@@ -49,6 +51,23 @@ async def handle_pin_command(message: Message, bot: Bot):
 
     await message.reply(PIN_MESSAGE)
     await pin_best_message(bot)
+
+
+@router.message(Command("generate_meme"))
+async def handle_generate_meme_command(message: Message, bot: Bot):
+    """Handles the /generate_meme command.
+
+    Only admins can use this command.
+
+    Args:
+        message: The message object containing the command.
+        bot: The Bot instance.
+    """
+    if message.from_user.id not in settings.ADMIN_IDS:
+        return
+
+    await message.reply(MEME_MESSAGE)
+    await generate_and_publish_meme(bot)
 
 
 @router.message(Command("scream"))
