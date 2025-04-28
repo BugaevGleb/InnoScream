@@ -23,7 +23,7 @@ async def lifespan(_: FastAPI):
         _: FastAPI instance
     """
     logger.info("Initializing database")
-    #await create_db_and_tables()
+    await create_db_and_tables()
     logger.info("Starting application")
     yield
     logger.info("Shutting down application")
