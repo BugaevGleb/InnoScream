@@ -295,7 +295,7 @@ async def get_weekly_stats_via_daily():
             except Exception as e:
                 # Log other errors but continue, using count=0
                 logger.exception(f"Error calling daily stats for {date_str}: {e}")
-            
+
             # Append result for the day
             response_stats.append(
                 DailyCount(day=current_date.strftime("%a"), count=count)
@@ -341,7 +341,7 @@ async def get_user_stats(user_id: str, session: SessionDep):
     count = result.scalar_one_or_none()
 
     if count is None:
-        # This case should ideally not happen if count() is used, 
+        # This case should ideally not happen if count() is used,
         # it returns 0 if no rows match.
         # But handling just in case.
         logger.warning("Count for user_id %s returned None.", user_id)

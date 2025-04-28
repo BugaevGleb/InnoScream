@@ -17,7 +17,7 @@ async def send_weekly_chart(bot: Bot):
             )
             response.raise_for_status()
             stats_data = response.json() # Expects {'stats': [{'day': 'Mon', 'count': ...}, ...]}
-        
+
         if not stats_data or 'stats' not in stats_data or not stats_data['stats']:
             logger.warning("No weekly stats data received from API.")
             # Optionally send a message indicating no data
@@ -30,7 +30,7 @@ async def send_weekly_chart(bot: Bot):
         if settings.INNOSCREAM_CHANNEL_ID:
             target_chat_id = settings.INNOSCREAM_CHANNEL_ID
             await bot.send_message(
-                chat_id=target_chat_id, 
+                chat_id=target_chat_id,
                 text=f'Here is the <a href="{chart_url}">weekly stress chart</a>.',
                 parse_mode="HTML" # Use HTML for link formatting
             )
@@ -47,4 +47,4 @@ async def send_weekly_chart(bot: Bot):
         logger.exception(f"Error in scheduled job send_weekly_chart: {e}")
         # Optionally notify admin about the error
         if settings.ADMIN_IDS:
-             await bot.send_message(settings.ADMIN_IDS[0], "Error generating weekly stress chart.") 
+             await bot.send_message(settings.ADMIN_IDS[0], "Error generating weekly stress chart.")

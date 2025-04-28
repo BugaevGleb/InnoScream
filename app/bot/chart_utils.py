@@ -11,7 +11,7 @@ def generate_weekly_stress_chart_url(daily_stats: List[Dict[str, int]]) -> str:
     """Generates a QuickChart URL for the weekly stress bar chart.
 
     Args:
-        daily_stats: A list of dictionaries, e.g., 
+        daily_stats: A list of dictionaries, e.g.,
                      [{'day': 'Mon', 'count': 10}, {'day': 'Tue', 'count': 5}, ...]
                      Expected to contain 7 entries, one for each day Mon-Sun.
 
@@ -21,7 +21,7 @@ def generate_weekly_stress_chart_url(daily_stats: List[Dict[str, int]]) -> str:
     # Ensure the order is Mon, Tue, ..., Sun
     days_order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     stats_dict = {item['day']: item['count'] for item in daily_stats}
-    
+
     labels = days_order
     data = [stats_dict.get(day, 0) for day in days_order] # Ensure correct order and handle missing days
 
@@ -62,8 +62,8 @@ def generate_weekly_stress_chart_url(daily_stats: List[Dict[str, int]]) -> str:
 
     # Construct the final URL
     # Optional: Add width/height parameters: &w=600&h=400
-    chart_url = f"{BASE_URL}?c={encoded_chart_json}" 
-    
+    chart_url = f"{BASE_URL}?c={encoded_chart_json}"
+
     logger.info(f"Generated QuickChart URL: {chart_url}")
     return chart_url
 
@@ -89,4 +89,4 @@ if __name__ == '__main__':
         {'day': 'Fri', 'count': 2},
     ]
     url_missing = generate_weekly_stress_chart_url(example_stats_missing)
-    print(f"Example Chart URL (missing data): {url_missing}") 
+    print(f"Example Chart URL (missing data): {url_missing}")
