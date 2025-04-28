@@ -4,10 +4,12 @@ from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, Dispatcher
 
-from app.bot.handlers import router
 from app.bot.pin_most_voted import pin_best_message
 from app.bot.scheduler import send_weekly_chart
+from app.bot.handlers import router, channel_router
 from app.core.config import settings
+
+from app.bot.pin_most_voted import pin_best_message
 
 logging.basicConfig(
     level=logging.INFO,
@@ -90,6 +92,7 @@ async def main() -> None:
 
     dp = Dispatcher()
     dp.include_router(router)
+    dp.include_router(channel_router)
 
     asyncio.create_task(scheduler(bot))
     asyncio.create_task(weekly_chart_scheduler(bot))
