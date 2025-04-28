@@ -19,7 +19,7 @@ class UserMessage(Base):
     )
     user_id: Mapped[str] = mapped_column(String)
     message: Mapped[str] = mapped_column(String)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime)
 
     def __repr__(self):
         """Return a string representation of the UserMessage object."""
@@ -37,12 +37,13 @@ class Reaction(Base):
     message_id: Mapped[int] = mapped_column(
         Integer, primary_key=True, index=True
     )
-    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    changed_at: Mapped[datetime] = mapped_column(DateTime)
     reactions: Mapped[list[dict]] = mapped_column(JSON)
 
     def __repr__(self):
         """Return a string representation of the Reaction object."""
         return (
             f"<Reaction(message_id={self.message_id}, "
-            f"changed_at={self.changed_at})>"
+            f"changed_at={self.changed_at}, "
+            f"reactions={self.reactions})>"
         )

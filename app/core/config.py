@@ -22,6 +22,14 @@ class Settings(BaseSettings):
     )
     PROJECT_VERSION: str = "0.1.0"
 
+    ADMIN_IDS: list[int] = [
+        604005377,  # Dmitriy
+        752232569,  # Gleb
+        580245280,  # Milana
+        732877680,  # Vlad
+        # TODO: add Nail and Ainur
+    ]
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

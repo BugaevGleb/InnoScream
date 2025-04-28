@@ -9,9 +9,11 @@ from aiogram.types import Message, MessageReactionCountUpdated
 from app.bot.messages import (
     ERROR_MESSAGE,
     INVALID_TEXT,
+    PIN_MESSAGE,
     START_MESSAGE,
     SUCCESS_MESSAGE,
 )
+from app.bot.pin_most_voted import pin_best_message
 from app.core.config import settings
 from app.core.schemas import Reaction, ReactionUpdate, UserMessage
 
@@ -28,6 +30,23 @@ async def handle_start_command(message: Message):
         message: The message object containing the command.
     """
     await message.reply(START_MESSAGE)
+
+
+@router.message(Command("pin"))
+async def handle_pin_command(message: Message, bot: Bot):
+    """Handles the /pin command.
+
+    Only admins can use this command.
+
+    Args:
+        message: The message object containing the command.
+        bot: The Bot instance.
+    """
+    if message.from_user.id not in settings.ADMIN_IDS:
+        return
+
+    await message.reply(PIN_MESSAGE)
+    await pin_best_message(bot)
 
 
 @router.message(Command("scream"))
@@ -51,18 +70,19 @@ async def handle_scream_command(message: Message, bot: Bot):
         await message.reply(INVALID_TEXT)
         return
 
-    user_message = UserMessage(
-        message_id=message.message_id,
-        user_id=hashlib.sha256(str(message.from_user.id).encode()).hexdigest(),
-        message=scream_text,
-        created_at=message.date,
-    )
-
     try:
-        await bot.send_message(
+        channel_message = await bot.send_message(
             chat_id=settings.INNOSCREAM_CHANNEL_ID,
             text=scream_text,
             disable_web_page_preview=True,
+        )
+        user_message = UserMessage(
+            message_id=channel_message.message_id,
+            user_id=hashlib.sha256(
+                str(message.from_user.id).encode()
+            ).hexdigest(),
+            message=scream_text,
+            created_at=message.date,
         )
         try:
             async with httpx.AsyncClient(
