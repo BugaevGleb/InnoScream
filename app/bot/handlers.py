@@ -13,6 +13,7 @@ from app.bot.messages import (
     START_MESSAGE,
     SUCCESS_MESSAGE,
     MEME_MESSAGE,
+    STATS_MESSAGE,
 )
 from app.bot.pin_most_voted import pin_best_message
 from app.bot.meme_publisher import generate_and_publish_meme
@@ -127,6 +128,58 @@ async def handle_scream_command(message: Message, bot: Bot):
     except Exception as e:
         logger.exception(
             "An error occurred while processing /scream command: %s",
+            e,
+        )
+        await message.reply(ERROR_MESSAGE)
+
+
+@router.message(Command("stats"))
+async def handle_stats_command(message: Message):
+    """Handles the /stats command.
+
+    Retrieves and sends the user's personal message count.
+
+    Args:
+        message: The message object containing the command.
+    """
+    if not message.from_user:
+        logger.error("Cannot get stats: message.from_user is None.")
+        await message.reply(ERROR_MESSAGE)
+        return
+
+    user_id_hashed = hashlib.sha256(
+        str(message.from_user.id).encode()
+    ).hexdigest()
+
+    try:
+        async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
+            response = await client.get(
+                url=f"{settings.INNOSCREAM_API_URL}/stats/{user_id_hashed}",
+            )
+            response.raise_for_status()
+            count = response.json()
+
+        await message.reply(STATS_MESSAGE.format(count=count))
+        logger.info("Successfully sent stats for user %s", user_id_hashed)
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 404:
+            # Handle case where user has no messages yet
+            await message.reply(STATS_MESSAGE.format(count=0))
+            logger.info(
+                "No stats found for user %s, returning 0.", user_id_hashed
+            )
+        else:
+            logger.exception(
+                "HTTP error occurred while getting stats for user %s: %s",
+                user_id_hashed,
+                e,
+            )
+            await message.reply(ERROR_MESSAGE)
+    except Exception as e:
+        logger.exception(
+            "An error occurred while \
+processing /stats command for user %s: %s",
+            user_id_hashed,
             e,
         )
         await message.reply(ERROR_MESSAGE)
