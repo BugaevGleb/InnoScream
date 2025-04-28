@@ -9,3 +9,4 @@ INVALID_TEXT = (
 SUCCESS_MESSAGE = "Scream sent to the channel!"
 ERROR_MESSAGE = "Could not send message to the channel :("
 PIN_MESSAGE = "Pinning best message..."
+STATS_MESSAGE = "You have screamed {count} times into the void."
