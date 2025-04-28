@@ -1,5 +1,5 @@
 import logging
-from datetime import date
+from datetime import datetime, timezone
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
@@ -23,7 +23,7 @@ async def get_best_message_id():
     Returns:
         int: The best message ID
     """
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
 
     async with AsyncSessionFactory() as session:
         stmt = (
@@ -37,11 +37,11 @@ async def get_best_message_id():
         result = await session.execute(stmt)
         reactions = result.scalars().all()
 
-        logger.info(f"Found {len(reactions)} reactions today.")
-
         if not reactions:
             logger.info("No reactions found for today.")
             return None
+
+        logger.info(f"Found {len(reactions)} reactions today.")
 
         message_reaction_sums = {
             reaction.message_id: sum(

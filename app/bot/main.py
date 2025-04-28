@@ -19,7 +19,7 @@ async def scheduler(bot: Bot):
     """Scheduler that pins the best message every day at 23:59."""
     while True:
         now = datetime.now()
-        target = now.replace(hour=16, minute=36, second=0, microsecond=0)
+        target = now.replace(hour=15, minute=33, second=0, microsecond=0)
 
         if now > target:
             target = target.replace(day=now.day + 1)

@@ -1,4 +1,5 @@
 import logging
+from datetime import timezone
 
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
@@ -87,7 +88,10 @@ async def update_reaction(
     db_log = result.scalar_one_or_none()
 
     if db_log:
-        if db_log.changed_at > reaction_update.changed_at:
+        if (
+            db_log.changed_at.replace(tzinfo=timezone.utc)
+            > reaction_update.changed_at
+        ):
             logger.info(
                 "Skipping reaction update for message_id %s: "
                 "new reaction update is older than the existing one",
