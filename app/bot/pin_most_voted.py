@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramBadRequest
@@ -17,13 +17,18 @@ from app.core.models import (
 logger = logging.getLogger(__name__)
 
 
-async def get_best_message_id():
+async def get_best_message_id(today: date | None = None) -> int | None:
     """Gets the best message ID from the database.
 
+    Args:
+        today: The date to get the best message ID for. If not provided, the
+            current date will be used.
+
     Returns:
-        int: The best message ID
+        The best message ID or None if no reactions are found.
     """
-    today = datetime.now(timezone.utc).date()
+    if today is None:
+        today = datetime.now(timezone.utc).date()
 
     async with AsyncSessionFactory() as session:
         stmt = (
@@ -38,7 +43,7 @@ async def get_best_message_id():
         reactions = result.scalars().all()
 
         if not reactions:
-            logger.info("No reactions found for today.")
+            logger.warn("No reactions found for today.")
             return None
 
         logger.info(f"Found {len(reactions)} reactions today.")
@@ -59,14 +64,16 @@ async def get_best_message_id():
         return best_message_id
 
 
-async def pin_best_message(bot: Bot):
+async def pin_best_message(bot: Bot, today: date | None = None):
     """Pins the best message from the database.
 
     Args:
         bot: Bot instance
+        today: The date for the best message search. If not provided, the
+            current date will be used.
     """
-    best_message_id = await get_best_message_id()
-    if not best_message_id:
+    best_message_id = await get_best_message_id(today)
+    if best_message_id is None:
         logger.info("No messages to pin.")
         return
 

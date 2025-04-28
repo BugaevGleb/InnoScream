@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, Dispatcher
 
@@ -17,17 +17,23 @@ logger = logging.getLogger(__name__)
 
 async def scheduler(bot: Bot):
     """Scheduler that pins the best message every day at 23:59."""
+    target = datetime.now(timezone.utc).replace(
+        hour=20, minute=59, second=0, microsecond=0
+    )  # time in UTC, wanting to pin at 23:59 in Moscow time
     while True:
-        now = datetime.now()
-        target = now.replace(hour=15, minute=33, second=0, microsecond=0)
-
+        now = datetime.now(timezone.utc)
         if now > target:
-            target = target.replace(day=now.day + 1)
+            target = target + timedelta(days=1)
 
         sleep_seconds = (target - now).total_seconds()
+        logger.info(
+            "Target: %s. Sleeping for %s seconds...",
+            target,
+            sleep_seconds,
+        )
         await asyncio.sleep(sleep_seconds)
-        logger.info(f"Pinning best message in {sleep_seconds} seconds...")
-        await pin_best_message(bot)
+
+        await pin_best_message(bot, target.date())
 
 
 async def main() -> None:
