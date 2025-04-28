@@ -4,9 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, Dispatcher
 
-from app.bot.handlers import router
-from app.bot.pin_most_voted import pin_best_message
+from app.bot.handlers import router, channel_router
 from app.core.config import settings
+
+from app.bot.pin_most_voted import pin_best_message
+from app.bot.meme_publisher import generate_and_publish_meme
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,6 +36,7 @@ async def scheduler(bot: Bot):
         await asyncio.sleep(sleep_seconds)
 
         await pin_best_message(bot, target.date())
+        await generate_and_publish_meme(bot, target.date())
 
 
 async def main() -> None:
@@ -44,6 +47,7 @@ async def main() -> None:
 
     dp = Dispatcher()
     dp.include_router(router)
+    dp.include_router(channel_router)
 
     asyncio.create_task(scheduler(bot))
 

@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     INNOSCREAM_BOT_TOKEN: str
     INNOSCREAM_CHANNEL_ID: int
+    UNSPLASH_ACCESS_KEY: str
 
     DATABASE_URL: str = "sqlite+aiosqlite:///./db.sqlite3"
 
