@@ -42,8 +42,8 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 async def create_db_and_tables():
     """Creates database tables based on the defined models."""
     async with engine.begin() as conn:
-        logger.info("Dropping existing tables (if any)...")
-        await conn.run_sync(Base.metadata.drop_all)
+        # logger.info("Dropping existing tables (if any)...")
+        # await conn.run_sync(Base.metadata.drop_all)
         logger.info("Creating tables...")
         await conn.run_sync(Base.metadata.create_all)
         logger.info("Tables created.")
