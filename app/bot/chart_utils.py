@@ -13,8 +13,8 @@ def generate_weekly_stress_chart_url(daily_stats: List[Dict[str, int]]) -> str:
 
     Args:
         daily_stats: A list of dictionaries, e.g.,
-                     [{'day': 'Mon', 'count': 10}, {'day': 'Tue', 'count': 5}, ...]
-                     Expected to contain 7 entries, one for each day Mon-Sun.
+            [{'day': 'Mon', 'count': 10}, {'day': 'Tue', 'count': 5}, ...]
+            Expected to contain 7 entries, one for each day Mon-Sun.
 
     Returns:
         The QuickChart URL string.

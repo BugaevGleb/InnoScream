@@ -64,12 +64,12 @@ async def weekly_chart_scheduler(bot: Bot):
 
         # Ensure sleep time is positive (should be, but as a safeguard)
         if sleep_seconds < 0:
-            # This might happen if the calculation is slightly off or clock changes
             # Skip this run and wait for the next cycle
             logger.warning(
-                "Calculated sleep time is negative, skipping this weekly chart run."
+                "Calculated sleep time is negative,\
+skipping this weekly chart run."
             )
-            await asyncio.sleep(60)  # Sleep for a minute before recalculating
+            await asyncio.sleep(60)
             continue
 
         logger.info(

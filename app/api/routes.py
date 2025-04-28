@@ -273,8 +273,9 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
 
 @router.get("/stats/weekly", response_model=WeeklyStatsResponse)
 async def get_weekly_stats_via_daily():
-    """Get weekly stats by calling the daily stats endpoint for the last 7 days."""
-    logger.info(f"Fetching weekly stats via daily endpoint calls...")
+    """Get weekly stats by calling the daily stats endpoint \
+    for the last 7 days."""
+    logger.info("Fetching weekly stats via daily endpoint calls...")
     response_stats = []
 
     # 1. Determine the date range
@@ -301,15 +302,15 @@ async def get_weekly_stats_via_daily():
             count = 0  # Default count if API call fails
             try:
                 response = await client.get(daily_url)
-                response.raise_for_status()  # Raise exception for 4xx/5xx errors
-                count = response.json()  # Expecting an integer count
+                response.raise_for_status()
+                count = response.json()
                 logger.debug(
                     f"Successfully fetched count for {date_str}: {count}"
                 )
             except httpx.HTTPStatusError as e:
-                # Log errors from the daily endpoint but continue, using count=0
                 logger.warning(
-                    f"HTTP error calling daily stats for {date_str}: {e.response.status_code} - {e.response.text}"
+                    f"HTTP error calling daily stats for {date_str}:\
+{e.response.status_code} - {e.response.text}"
                 )
             except Exception as e:
                 # Log other errors but continue, using count=0

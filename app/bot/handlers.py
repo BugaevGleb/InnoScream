@@ -157,7 +157,8 @@ async def handle_stats_command(message: Message):
             await message.reply(ERROR_MESSAGE)
     except Exception as e:
         logger.exception(
-            "An error occurred while processing /stats command for user %s: %s",
+            "An error occurred while \
+processing /stats command for user %s: %s",
             user_id_hashed,
             e,
         )
