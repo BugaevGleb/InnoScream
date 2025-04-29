@@ -1,7 +1,5 @@
 from pydantic import BaseModel
 
-# TODO: add api schemas here
-
 
 class DailyCount(BaseModel):
     day: str  # e.g., 'Mon', 'Tue' etc.

@@ -4,12 +4,11 @@ from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, Dispatcher
 
-from app.bot.pin_most_voted import pin_best_message
+from app.bot.handlers import channel_router, router
 from app.bot.meme_publisher import generate_and_publish_meme
+from app.bot.pin_most_voted import pin_best_message
 from app.bot.scheduler import send_weekly_chart
-from app.bot.handlers import router, channel_router
 from app.core.config import settings
-
 
 logging.basicConfig(
     level=logging.INFO,
@@ -44,13 +43,10 @@ async def weekly_chart_scheduler(bot: Bot):
     """Scheduler that sends the weekly chart every Monday at 08:00 UTC."""
     while True:
         now = datetime.now(timezone.utc)
-        # Calculate days until next Monday
         days_until_monday = (7 - now.weekday()) % 7
-        # If it's Monday but already past 8 AM, schedule for next week
         if days_until_monday == 0 and now.hour >= 8:
             days_until_monday = 7
 
-        # Calculate the exact datetime for next Monday 8:00 UTC
         next_run_date = (now + timedelta(days=days_until_monday)).date()
         target_time = datetime(
             next_run_date.year,
@@ -63,14 +59,14 @@ async def weekly_chart_scheduler(bot: Bot):
         )
 
         # sleep_seconds = (target_time - now).total_seconds()
-        sleep_seconds = 10
+        sleep_seconds = 10  # FIXME: replace this with above
 
-        # Ensure sleep time is positive (should be, but as a safeguard)
         if sleep_seconds < 0:
-            # Skip this run and wait for the next cycle
             logger.warning(
-                "Calculated sleep time is negative,\
-skipping this weekly chart run."
+                (
+                    "Calculated sleep time is negative, "
+                    "skipping this weekly chart run."
+                )
             )
             await asyncio.sleep(60)
             continue

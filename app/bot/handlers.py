@@ -6,17 +6,17 @@ from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.types import Message, MessageReactionCountUpdated
 
+from app.bot.meme_publisher import generate_and_publish_meme
 from app.bot.messages import (
     ERROR_MESSAGE,
     INVALID_TEXT,
+    MEME_MESSAGE,
     PIN_MESSAGE,
     START_MESSAGE,
-    SUCCESS_MESSAGE,
-    MEME_MESSAGE,
     STATS_MESSAGE,
+    SUCCESS_MESSAGE,
 )
 from app.bot.pin_most_voted import pin_best_message
-from app.bot.meme_publisher import generate_and_publish_meme
 from app.core.config import settings
 from app.core.schemas import Reaction, ReactionUpdate, UserMessage
 
@@ -236,8 +236,9 @@ async def handle_delete_command(message: Message, bot: Bot):
     target_chat_id = message.chat.id
 
     try:
-        await bot.delete_message(chat_id=target_chat_id,
-                                 message_id=target_message_id)
+        await bot.delete_message(
+            chat_id=target_chat_id, message_id=target_message_id
+        )
         try:
             async with httpx.AsyncClient(
                 timeout=settings.HTTP_TIMEOUT
@@ -255,8 +256,9 @@ async def handle_delete_command(message: Message, bot: Bot):
             )
 
         # Also delete the command message
-        await bot.delete_message(chat_id=message.chat.id,
-                                 message_id=message.message_id)
+        await bot.delete_message(
+            chat_id=message.chat.id, message_id=message.message_id
+        )
 
         logger.info(
             "Successfully deleted message %s from chat %s",

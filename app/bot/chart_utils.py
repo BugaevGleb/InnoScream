@@ -1,14 +1,13 @@
 import json
 import logging
 import urllib.parse
-from typing import List, Dict
 
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://quickchart.io/chart"
 
 
-def generate_weekly_stress_chart_url(daily_stats: List[Dict[str, int]]) -> str:
+def generate_weekly_stress_chart_url(daily_stats: list[dict[str, int]]) -> str:
     """Generates a QuickChart URL for the weekly stress bar chart.
 
     Args:
@@ -19,14 +18,11 @@ def generate_weekly_stress_chart_url(daily_stats: List[Dict[str, int]]) -> str:
     Returns:
         The QuickChart URL string.
     """
-    # Ensure the order is Mon, Tue, ..., Sun
     days_order = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     stats_dict = {item["day"]: item["count"] for item in daily_stats}
 
     labels = days_order
-    data = [
-        stats_dict.get(day, 0) for day in days_order
-    ]  # Ensure correct order and handle missing days
+    data = [stats_dict.get(day, 0) for day in days_order]
 
     chart_config = {
         "type": "bar",
@@ -52,30 +48,24 @@ def generate_weekly_stress_chart_url(daily_stats: List[Dict[str, int]]) -> str:
                     {
                         "ticks": {
                             "beginAtZero": True,
-                            "stepSize": 1,  # Ensure integer steps for counts
+                            "stepSize": 1,
                         }
                     }
                 ]
             },
-            "legend": {
-                "display": False
-            },  # Hide legend as there's only one dataset
+            "legend": {"display": False},
         },
     }
 
-    # Convert config to JSON string and URL-encode it
     chart_json = json.dumps(chart_config)
     encoded_chart_json = urllib.parse.quote(chart_json)
 
-    # Construct the final URL
-    # Optional: Add width/height parameters: &w=600&h=400
     chart_url = f"{BASE_URL}?c={encoded_chart_json}"
 
     logger.info(f"Generated QuickChart URL: {chart_url}")
     return chart_url
 
 
-# Example usage (for testing)
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     example_stats = [
@@ -90,7 +80,6 @@ if __name__ == "__main__":
     url = generate_weekly_stress_chart_url(example_stats)
     print(f"Example Chart URL: {url}")
 
-    # Example with missing data
     example_stats_missing = [
         {"day": "Mon", "count": 12},
         {"day": "Wed", "count": 3},

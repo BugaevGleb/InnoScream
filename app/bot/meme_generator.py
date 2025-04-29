@@ -1,8 +1,12 @@
-import requests
-from io import BytesIO
-from PIL import Image, ImageFont, ImageDraw
-import platform
+import logging
 import os
+import platform
+from io import BytesIO
+
+import requests
+from PIL import Image, ImageDraw, ImageFont
+
+logger = logging.getLogger(__name__)
 
 
 def extract_keywords(message_text: str) -> list[str]:
@@ -14,24 +18,24 @@ def fetch_background_image(
     keywords: list[str], unsplash_access_key: str
 ) -> Image.Image | None:
     """Fetch a random landscape image from Unsplash based on keywords."""
-    query = '+'.join(keywords)
+    query = "+".join(keywords)
     url = (
         f"https://api.unsplash.com/photos/random?query={query}"
         f"&client_id={unsplash_access_key}&orientation=landscape"
     )
-    print(f"[Debug] Fetching image from: {url}")
+    logger.info("Fetching image from: %s", url)
     try:
         response = requests.get(url, timeout=15)
         response.raise_for_status()
         data = response.json()
-        image_url = data['urls']['regular']
+        image_url = data["urls"]["regular"]
         img_response = requests.get(image_url, timeout=15)
         img_response.raise_for_status()
         return Image.open(BytesIO(img_response.content)).convert("RGBA")
     except requests.exceptions.RequestException as e:
-        print(f"[Error] Error fetching background image: {e}")
+        logger.exception("Error fetching background image: %s", e)
     except KeyError:
-        print("[Error] Error parsing Unsplash response (key missing)")
+        logger.exception("Error parsing Unsplash response (key missing)")
     return None
 
 
@@ -45,7 +49,7 @@ def get_text_size(
         height = bbox[3] - bbox[1]
         return (width, height)
     except AttributeError:
-        print("[Warning] textbbox not available; attempting fallback.")
+        logger.warning("Textbbox not available; attempting fallback.")
         try:
             width = draw.textlength(text, font=font)
             return (width, font.size)
@@ -57,7 +61,7 @@ def wrap_text_pixel(
     text: str,
     font: ImageFont.FreeTypeFont,
     draw: ImageDraw.ImageDraw,
-    max_width: int
+    max_width: int,
 ) -> list[str]:
     """Wraps the input text to fit within max_width (in pixels)."""
     lines = []
@@ -89,12 +93,12 @@ def calculate_font_size(
     font_path: str | None,
     draw: ImageDraw.ImageDraw,
     max_text_width: int,
-    image_height: int
+    image_height: int,
 ) -> int:
     """Calculate optimal font size based on available space."""
     optimal_font_size = 1
     max_theoretical_size = int(min(image_height / 4, image_height / 5))
-    print(f"[Debug] Max theoretical font size: {max_theoretical_size}")
+    logger.info("Max theoretical font size: %s", max_theoretical_size)
 
     if not font_path:
         return 10
@@ -103,7 +107,7 @@ def calculate_font_size(
         try:
             font_candidate = ImageFont.truetype(font_path, size)
         except IOError:
-            print(f"[Debug] Skipping font size {size} due to IOError.")
+            logger.info("Skipping font size %s due to IOError.", size)
             continue
 
         lines_candidate = wrap_text_pixel(
@@ -130,13 +134,13 @@ def get_font_path() -> str | None:
     else:
         test_path = "Impact.ttf"
 
-    print(f"[Debug] Checking font path: {test_path}")
+    logger.info("Checking font path: %s", test_path)
     if os.path.exists(test_path):
         try:
             ImageFont.truetype(test_path, 10)
             return test_path
         except IOError as e:
-            print(f"[Warning] IOError loading font '{test_path}': {e}")
+            logger.warning("IOError loading font '%s': %s", test_path, e)
     return None
 
 
@@ -148,7 +152,7 @@ def draw_text(
     line_spacing: int,
     image_width: int,
     y_start: int,
-    stroke_width: int
+    stroke_width: int,
 ) -> None:
     """Draw text on image with proper positioning and stroke effect."""
     outline_color = "black"
@@ -166,7 +170,7 @@ def draw_text(
                 font=font,
                 fill=text_color,
                 stroke_width=stroke_width,
-                stroke_fill=outline_color
+                stroke_fill=outline_color,
             )
         except TypeError:
             offsets = [
@@ -177,14 +181,14 @@ def draw_text(
                 (-stroke_width, 0),
                 (stroke_width, 0),
                 (0, -stroke_width),
-                (0, stroke_width)
+                (0, stroke_width),
             ]
             for dx, dy in offsets:
                 draw.text(
                     (x_text + dx, current_y + dy),
                     line,
                     font=font,
-                    fill=outline_color
+                    fill=outline_color,
                 )
             draw.text((x_text, current_y), line, font=font, fill=text_color)
 
@@ -195,42 +199,38 @@ def generate_meme(
     message_text: str,
     unsplash_access_key: str,
     output_filename: str = "generated_meme.jpg",
-    size_coefficient: float = 1/1.5
+    size_coefficient: float = 1 / 1.5,
 ) -> MemoryFile | None:
     """Generates a meme image by overlaying message_text onto an image."""
     keywords = extract_keywords(message_text)
-    print(f"[Debug] Keywords for image search: {keywords}")
+    logger.info("Keywords for image search: %s", keywords)
 
     bg_image = fetch_background_image(keywords, unsplash_access_key)
     if bg_image is None:
-        print("[Error] Failed to get background image.")
+        logger.error("Failed to get background image.")
         return None
 
     image_width, image_height = bg_image.size
-    print(f"[Debug] Image dimensions: {image_width}x{image_height}")
+    logger.info("Image dimensions: %sx%s", image_width, image_height)
     draw = ImageDraw.Draw(bg_image)
 
     margin = int(image_width * 0.05)
     max_text_width = image_width - 2 * margin
-    print(f"[Debug] Margin: {margin}, Max text width: {max_text_width}")
+    logger.info("Margin: %s, Max text width: %s", margin, max_text_width)
 
     font_path = get_font_path()
     if font_path:
-        print(f"[Info] Using font: {font_path}")
+        logger.info("Using font: %s", font_path)
     else:
-        print("[Info] Using Pillow's default font.")
+        logger.info("Using Pillow's default font.")
 
     optimal_size = calculate_font_size(
-        message_text,
-        font_path,
-        draw,
-        max_text_width,
-        image_height
+        message_text, font_path, draw, max_text_width, image_height
     )
-    print(f"[Result] Optimal font size: {optimal_size}")
+    logger.info("Optimal font size: %s", optimal_size)
 
     final_font_size = max(1, int(optimal_size * size_coefficient))
-    print(f"[Result] Final font size: {final_font_size}")
+    logger.info("Final font size: %s", final_font_size)
 
     try:
         font = (
@@ -239,24 +239,24 @@ def generate_meme(
             else ImageFont.load_default()
         )
     except IOError as e:
-        print(f"[Error] Failed to load font: {e}. Using default.")
+        logger.exception("Failed to load font: %s. Using default.", e)
         font = ImageFont.load_default()
         final_font_size = 10
 
     line_spacing = int(final_font_size * 0.2)
     stroke_width = max(1, final_font_size // 25)
-    print(f"[Debug] Line space: {line_spacing}, Stroke width: {stroke_width}")
+    logger.info("Line space: %s, Stroke width: %s", line_spacing, stroke_width)
 
-    print("[Debug] Wrapping text...")
+    logger.info("Wrapping text...")
     lines = wrap_text_pixel(message_text, font, draw, max_text_width)
-    print(f"[Debug] Wrapped lines: {lines}")
+    logger.info("Wrapped lines: %s", lines)
 
     text_heights = [get_text_size(draw, line, font)[1] for line in lines]
     total_text_height = sum(text_heights) + line_spacing * (len(lines) - 1)
     y_start = image_height - total_text_height - margin
-    print(f"[Debug] Text height: {total_text_height}, Y-start: {y_start}")
+    logger.info("Text height: %s, Y-start: %s", total_text_height, y_start)
 
-    print("[Debug] Drawing text...")
+    logger.info("Drawing text...")
     draw_text(
         draw,
         lines,
@@ -265,7 +265,7 @@ def generate_meme(
         line_spacing,
         image_width,
         y_start,
-        stroke_width
+        stroke_width,
     )
 
     if output_filename.lower().endswith((".jpg", ".jpeg")):
@@ -273,15 +273,15 @@ def generate_meme(
     else:
         output_format = "PNG"
     if output_format == "JPEG":
-        print("[Debug] Converting to RGB for JPEG")
+        logger.info("Converting to RGB for JPEG")
         bg_image = bg_image.convert("RGB")
 
     buffer = BytesIO()
     try:
         bg_image.save(buffer, format=output_format)
         buffer.seek(0)
-        print(f"[Success] Meme generated as {output_format}")
+        logger.info("Meme generated as %s", output_format)
         return MemoryFile(buffer.getvalue())
     except Exception as e:
-        print(f"[Error] Failed to save image: {e}")
+        logger.exception("Failed to save image: %s", e)
         return None

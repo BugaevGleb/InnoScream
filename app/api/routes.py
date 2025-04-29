@@ -1,14 +1,14 @@
 import logging
-from datetime import date, timezone
+from datetime import date, datetime, timezone
 
+import httpx
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import func, select
-
 from sqlalchemy.sql.expression import cast
-import datetime
-
 
 from app.api.dependencies import SessionDep
+from app.api.schemas import AllStatsResponse, DailyCount, WeeklyStatsResponse
+from app.core.config import settings
 from app.core.models import (
     Reaction as ReactionDB,
 )
@@ -16,10 +16,6 @@ from app.core.models import (
     UserMessage as UserMessageDB,
 )
 from app.core.schemas import ReactionResponse, ReactionUpdate, UserMessage
-from app.api.schemas import DailyCount, WeeklyStatsResponse, AllStatsResponse
-
-import httpx
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -222,53 +218,53 @@ async def get_reaction_log(message_id: int, session: SessionDep):
 @router.get("/stats/daily/{target_date_str}", response_model=int)
 async def get_daily_stats(target_date_str: str, session: SessionDep):
     """Get the number of messages posted on a specific date (YYYY-MM-DD)."""
-    logger.info(f"Fetching stats for specific date: {target_date_str}")
+    logger.info("Fetching stats for specific date: %s", target_date_str)
 
-    # 1. Parse and validate the date string
     try:
-        target_date = datetime.datetime.strptime(
-            target_date_str, "%Y-%m-%d"
-        ).date()
+        target_date = datetime.strptime(target_date_str, "%Y-%m-%d").date()
     except ValueError:
-        logger.error(f"Invalid date format provided: {target_date_str}")
+        logger.error("Invalid date format provided: %s", target_date_str)
         raise HTTPException(
-            status_code=400, detail="Invalid date format. Use YYYY-MM-DD."
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date format. Use YYYY-MM-DD.",
         )
 
-    # 2. Create timezone-aware datetime boundaries for the query (UTC)
     try:
-        start_datetime_utc = datetime.datetime.combine(
+        start_datetime_utc = datetime.combine(
             target_date, datetime.time.min, tzinfo=datetime.timezone.utc
         )
         end_datetime_utc = start_datetime_utc + datetime.timedelta(days=1)
         logger.info(
-            f"Querying count from {start_datetime_utc} to {end_datetime_utc}"
+            "Querying count from %s to %s",
+            start_datetime_utc,
+            end_datetime_utc,
         )
     except Exception as e:
         logger.exception("Error creating date boundaries: %s", e)
         raise HTTPException(
-            status_code=500, detail="Error creating date boundaries"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating date boundaries",
         )
 
-    # 3. Execute the database query
     try:
         stmt = select(func.count(UserMessageDB.message_id)).where(
             UserMessageDB.created_at >= start_datetime_utc,
             UserMessageDB.created_at < end_datetime_utc,
         )
         result = await session.execute(stmt)
-        count = (
-            result.scalar_one_or_none() or 0
-        )  # Use scalar_one_or_none and default to 0
+        count = result.scalar_one_or_none() or 0
 
-        logger.info(f"Count for {target_date_str}: {count}")
+        logger.info("Count for %s: %s", target_date_str, count)
         return count
 
     except Exception as e:
         logger.exception(
-            f"Database error fetching stats for {target_date_str}: %s", e
+            "Database error fetching stats for %s: %s", target_date_str, e
         )
-        raise HTTPException(status_code=500, detail="Database query failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database query failed",
+        )
 
 
 @router.get("/stats/weekly", response_model=WeeklyStatsResponse)
@@ -278,9 +274,8 @@ async def get_weekly_stats_via_daily():
     logger.info("Fetching weekly stats via daily endpoint calls...")
     response_stats = []
 
-    # 1. Determine the date range
     try:
-        now_utc = datetime.datetime.now(datetime.timezone.utc)
+        now_utc = datetime.now(datetime.timezone.utc)
         today_utc = now_utc.date()
         all_dates = [
             today_utc - datetime.timedelta(days=i) for i in range(6, -1, -1)
@@ -290,40 +285,40 @@ async def get_weekly_stats_via_daily():
             "Error calculating date range for weekly stats: %s", e
         )
         raise HTTPException(
-            status_code=500, detail="Error calculating date range"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error calculating date range",
         )
 
-    # 2. Call daily endpoint for each date
     async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
         for current_date in all_dates:
             date_str = current_date.strftime("%Y-%m-%d")
-            logger.info(f"Fetching stats for date: {date_str}")
+            logger.info("Fetching stats for date: %s", date_str)
             daily_url = f"{settings.INNOSCREAM_API_URL}/stats/daily/{date_str}"
-            count = 0  # Default count if API call fails
+            count = 0
             try:
                 response = await client.get(daily_url)
                 response.raise_for_status()
                 count = response.json()
                 logger.debug(
-                    f"Successfully fetched count for {date_str}: {count}"
+                    "Successfully fetched count for %s: %s", date_str, count
                 )
             except httpx.HTTPStatusError as e:
                 logger.warning(
-                    f"HTTP error calling daily stats for {date_str}:\
-{e.response.status_code} - {e.response.text}"
+                    "HTTP error calling daily stats for %s: %s - %s",
+                    date_str,
+                    e.response.status_code,
+                    e.response.text,
                 )
             except Exception as e:
-                # Log other errors but continue, using count=0
                 logger.exception(
-                    f"Error calling daily stats for {date_str}: {e}"
+                    "Error calling daily stats for %s: %s", date_str, e
                 )
 
-            # Append result for the day
             response_stats.append(
                 DailyCount(day=current_date.strftime("%a"), count=count)
             )
 
-    logger.info(f"Assembled weekly stats: {response_stats}")
+    logger.info("Assembled weekly stats: %s", response_stats)
     return WeeklyStatsResponse(stats=response_stats)
 
 
@@ -332,28 +327,24 @@ async def get_all_time_stats(session: SessionDep):
     """Get the number of messages posted per day for all time."""
     logger.info("Fetching all-time daily stats...")
 
-    # Query to count messages per day, without date filtering
     stmt = (
         select(
             cast(UserMessageDB.created_at, func.date()).label("date"),
             func.count(UserMessageDB.message_id).label("count"),
         )
         .group_by(cast(UserMessageDB.created_at, func.date()))
-        .order_by(
-            cast(UserMessageDB.created_at, func.date())
-        )  # Order chronologically
+        .order_by(cast(UserMessageDB.created_at, func.date()))
     )
 
     result = await session.execute(stmt)
-    daily_counts_db = result.all()  # list of tuples (date, count)
+    daily_counts_db = result.all()
 
-    # Convert dates to day abbreviations for the response
     response_stats = [
         DailyCount(day=db_date.strftime("%Y-%m-%d"), count=count)
         for db_date, count in daily_counts_db
     ]
 
-    logger.info(f"All-time stats result count: {len(response_stats)}")
+    logger.info("All-time stats result count: %s", len(response_stats))
     return AllStatsResponse(stats=response_stats)
 
 
@@ -369,9 +360,6 @@ async def get_user_stats(user_id: str, session: SessionDep):
     count = result.scalar_one_or_none()
 
     if count is None:
-        # This case should ideally not happen if count() is used,
-        # it returns 0 if no rows match.
-        # But handling just in case.
         logger.warning("Count for user_id %s returned None.", user_id)
         return 0
 

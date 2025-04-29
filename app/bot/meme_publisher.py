@@ -4,10 +4,10 @@ from datetime import date
 import httpx
 from aiogram import Bot
 from aiogram.types import BufferedInputFile
-from app.core.config import settings
 
 from app.bot.meme_generator import generate_meme
 from app.bot.pin_most_voted import get_best_message_id
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,7 @@ async def get_message_text(message_id: int) -> str:
         response.raise_for_status()
         message_data = response.json()
         text = message_data.get("message", "")
-        logger.info(
-            "Message text for id %s retrieved: %s",
-            message_id, text)
+        logger.info("Message text for id %s retrieved: %s", message_id, text)
         return text
 
 
@@ -40,18 +38,19 @@ async def generate_and_publish_meme(bot: Bot, today: date | None = None):
         message_text = await get_message_text(best_message_id)
         if not message_text:
             logger.warning(
-                "No message text found for message id %s.",
-                best_message_id)
+                "No message text found for message id %s.", best_message_id
+            )
             return
 
         meme_buffer = generate_meme(
             message_text,
             UNSPLASH_ACCESS_KEY,
-            output_filename="generated_meme.jpg")
+            output_filename="generated_meme.jpg",
+        )
         if meme_buffer is None:
             logger.error(
-                "Meme generation failed for message id %s.",
-                best_message_id)
+                "Meme generation failed for message id %s.", best_message_id
+            )
             return
 
         logger.info("Meme generated in memory, now sending to channel.")
@@ -65,7 +64,7 @@ async def generate_and_publish_meme(bot: Bot, today: date | None = None):
             disable_notification=True,
         )
         logger.info(
-            "Meme published successfully for message id %s.",
-            best_message_id)
+            "Meme published successfully for message id %s.", best_message_id
+        )
     except Exception as e:
         logger.exception("Error in generate_and_publish_meme: %s", e)
