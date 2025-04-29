@@ -4,10 +4,10 @@ from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, Dispatcher
 
+from app.bot.chart_utils import send_weekly_chart
 from app.bot.handlers import channel_router, router
 from app.bot.meme_publisher import generate_and_publish_meme
 from app.bot.pin_most_voted import pin_best_message
-from app.bot.scheduler import send_weekly_chart
 from app.core.config import settings
 
 logging.basicConfig(
