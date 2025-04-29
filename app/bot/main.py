@@ -58,9 +58,7 @@ async def weekly_chart_scheduler(bot: Bot):
             tzinfo=timezone.utc,
         )
 
-        # sleep_seconds = (target_time - now).total_seconds()
-        sleep_seconds = 30  # FIXME: replace this with above
-
+        sleep_seconds = (target_time - now).total_seconds()
         if sleep_seconds < 0:
             logger.warning(
                 (

@@ -1,6 +1,14 @@
 START_MESSAGE = (
-    "Hello! I'm the InnoScream bot. "
-    "Use /scream to send a message to the channel."
+    "Hello! I'm the InnoScream bot.\n"
+    "Use /scream to send a message to the channel.\n"
+    "Use /stats to get your stats.\n"
+)
+ADMIN_START_MESSAGE = (
+    "Hello! I'm the InnoScream bot.\n"
+    "Use /scream to send a message to the channel.\n"
+    "Use /stats to get your stats.\n"
+    "Use /pin to pin the best message of the day.\n"
+    "Use /generate_meme to generate a meme from the best message of the day.\n"
 )
 INVALID_TEXT = (
     "Please provide some text after the /scream command. "

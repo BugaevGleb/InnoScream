@@ -8,6 +8,7 @@ from aiogram.types import Message, MessageReactionCountUpdated
 from app.bot.gateways import APIGateway
 from app.bot.meme_publisher import generate_and_publish_meme
 from app.bot.messages import (
+    ADMIN_START_MESSAGE,
     ERROR_MESSAGE,
     INVALID_TEXT,
     MEME_MESSAGE,
@@ -35,7 +36,10 @@ async def handle_start_command(message: Message):
     Args:
         message: The message object containing the command.
     """
-    await message.reply(START_MESSAGE)
+    if message.from_user and message.from_user.id in settings.ADMIN_IDS:
+        await message.reply(ADMIN_START_MESSAGE)
+    else:
+        await message.reply(START_MESSAGE)
 
 
 @router.message(Command("pin"))
