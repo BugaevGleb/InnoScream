@@ -40,26 +40,28 @@ def fetch_background_image(
 
 
 def get_text_size(
-    draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont
+    draw: ImageDraw.ImageDraw,
+    text: str,
+    font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
 ) -> tuple[int, int]:
     """Returns the bounding box size (width, height) of the given text."""
     try:
         bbox = draw.textbbox((0, 0), text, font=font)
-        width = bbox[2] - bbox[0]
-        height = bbox[3] - bbox[1]
-        return (width, height)
+        width = int(bbox[2] - bbox[0])
+        height = int(bbox[3] - bbox[1])
+        return width, height
     except AttributeError:
         logger.warning("Textbbox not available; attempting fallback.")
         try:
             width = draw.textlength(text, font=font)
-            return (width, font.size)
+            return int(width), int(font.size)  # type: ignore
         except AttributeError:
-            return (0, 0)
+            return 0, 0
 
 
 def wrap_text_pixel(
     text: str,
-    font: ImageFont.FreeTypeFont,
+    font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
     draw: ImageDraw.ImageDraw,
     max_width: int,
 ) -> list[str]:
@@ -147,7 +149,7 @@ def get_font_path() -> str | None:
 def draw_text(
     draw: ImageDraw.ImageDraw,
     lines: list[str],
-    font: ImageFont.FreeTypeFont,
+    font: ImageFont.FreeTypeFont | ImageFont.ImageFont,
     text_heights: list[int],
     line_spacing: int,
     image_width: int,

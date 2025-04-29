@@ -1,42 +1,33 @@
 import logging
-from datetime import date
+from datetime import date, datetime, timezone
 
-import httpx
 from aiogram import Bot
 from aiogram.types import BufferedInputFile
 
+from app.bot.gateways import APIGateway
 from app.bot.meme_generator import generate_meme
-from app.bot.pin_most_voted import get_best_message_id
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+gateway = APIGateway(settings.INNOSCREAM_API_URL, settings.HTTP_TIMEOUT)
 
-API_URL = settings.INNOSCREAM_API_URL
 UNSPLASH_ACCESS_KEY = settings.UNSPLASH_ACCESS_KEY
-
-
-async def get_message_text(message_id: int) -> str:
-    """Retrieves the user message text by its message_id."""
-    async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
-        response = await client.get(f"{API_URL}/user_messages/{message_id}")
-        response.raise_for_status()
-        message_data = response.json()
-        text = message_data.get("message", "")
-        logger.info("Message text for id %s retrieved: %s", message_id, text)
-        return text
 
 
 async def generate_and_publish_meme(bot: Bot, today: date | None = None):
     """Generates and publishes memes from best posts."""
     try:
-        best_message_id = await get_best_message_id(today)
+        if today is None:
+            today = datetime.now(timezone.utc).date()
+
+        best_message_id = await gateway.get_best_message_id(today)
         if best_message_id is None:
             logger.info("No best message id found for today %s.", today)
             return
 
-        message_text = await get_message_text(best_message_id)
-        if not message_text:
+        message_text = await gateway.get_message_text(best_message_id)
+        if message_text is None:
             logger.warning(
                 "No message text found for message id %s.", best_message_id
             )

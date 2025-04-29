@@ -7,7 +7,9 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://quickchart.io/chart"
 
 
-def generate_weekly_stress_chart_url(daily_stats: list[dict[str, int]]) -> str:
+def generate_weekly_stress_chart_url(
+    daily_stats: list[dict[str, str | int]],
+) -> str:
     """Generates a QuickChart URL for the weekly stress bar chart.
 
     Args:

@@ -1,11 +1,11 @@
 import hashlib
 import logging
 
-import httpx
 from aiogram import Bot, Router
 from aiogram.filters import Command
 from aiogram.types import Message, MessageReactionCountUpdated
 
+from app.bot.gateways import APIGateway
 from app.bot.meme_publisher import generate_and_publish_meme
 from app.bot.messages import (
     ERROR_MESSAGE,
@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 
 router = Router(name="scream_handler")
 channel_router = Router(name="channel_handler")
+
+gateway = APIGateway(settings.INNOSCREAM_API_URL, settings.HTTP_TIMEOUT)
 
 
 @router.message(Command("start"))
@@ -46,7 +48,10 @@ async def handle_pin_command(message: Message, bot: Bot):
         message: The message object containing the command.
         bot: The Bot instance.
     """
-    if message.from_user.id not in settings.ADMIN_IDS:
+    if (
+        message.from_user is None
+        or message.from_user.id not in settings.ADMIN_IDS
+    ):
         return
 
     await message.reply(PIN_MESSAGE)
@@ -63,7 +68,10 @@ async def handle_generate_meme_command(message: Message, bot: Bot):
         message: The message object containing the command.
         bot: The Bot instance.
     """
-    if message.from_user.id not in settings.ADMIN_IDS:
+    if (
+        message.from_user is None
+        or message.from_user.id not in settings.ADMIN_IDS
+    ):
         return
 
     await message.reply(MEME_MESSAGE)
@@ -80,6 +88,10 @@ async def handle_scream_command(message: Message, bot: Bot):
         message: The message object containing the command.
         bot: The bot object.
     """
+    if message.from_user is None:
+        await message.reply(ERROR_MESSAGE)
+        return
+
     if not message.text:
         await message.reply(INVALID_TEXT)
         return
@@ -105,20 +117,7 @@ async def handle_scream_command(message: Message, bot: Bot):
             message=scream_text,
             created_at=message.date,
         )
-        try:
-            async with httpx.AsyncClient(
-                timeout=settings.HTTP_TIMEOUT
-            ) as client:
-                response = await client.post(
-                    url=f"{settings.INNOSCREAM_API_URL}/user_messages",
-                    json=user_message.model_dump(mode="json"),
-                )
-                response.raise_for_status()
-        except Exception as e:
-            logger.exception(
-                "Error occurred while sending message to API: %s",
-                e,
-            )
+        await gateway.create_user_message(user_message)
         await message.reply(SUCCESS_MESSAGE)
         logger.info(
             "Successfully sent scream message with id %s to channel %s",
@@ -151,38 +150,9 @@ async def handle_stats_command(message: Message):
         str(message.from_user.id).encode()
     ).hexdigest()
 
-    try:
-        async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
-            response = await client.get(
-                url=f"{settings.INNOSCREAM_API_URL}/stats/{user_id_hashed}",
-            )
-            response.raise_for_status()
-            count = response.json()
-
-        await message.reply(STATS_MESSAGE.format(count=count))
-        logger.info("Successfully sent stats for user %s", user_id_hashed)
-    except httpx.HTTPStatusError as e:
-        if e.response.status_code == 404:
-            # Handle case where user has no messages yet
-            await message.reply(STATS_MESSAGE.format(count=0))
-            logger.info(
-                "No stats found for user %s, returning 0.", user_id_hashed
-            )
-        else:
-            logger.exception(
-                "HTTP error occurred while getting stats for user %s: %s",
-                user_id_hashed,
-                e,
-            )
-            await message.reply(ERROR_MESSAGE)
-    except Exception as e:
-        logger.exception(
-            "An error occurred while \
-processing /stats command for user %s: %s",
-            user_id_hashed,
-            e,
-        )
-        await message.reply(ERROR_MESSAGE)
+    count = await gateway.get_user_stats(user_id_hashed)
+    await message.reply(STATS_MESSAGE.format(count=count))
+    logger.info("Successfully sent stats for user %s", user_id_hashed)
 
 
 @router.message_reaction_count()
@@ -197,24 +167,14 @@ async def handle_reaction_count(message: MessageReactionCountUpdated):
         changed_at=message.date,
         reactions=[
             Reaction(
-                type=reaction.type.emoji, total_count=reaction.total_count
+                type=reaction.type.emoji,  # type: ignore
+                total_count=reaction.total_count,
             )
             for reaction in message.reactions
         ],
     )
     logger.info("Reaction update: %s", reaction_update)
-    try:
-        async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
-            response = await client.put(
-                url=f"{settings.INNOSCREAM_API_URL}/reactions",
-                json=reaction_update.model_dump(mode="json"),
-            )
-            response.raise_for_status()
-    except Exception as e:
-        logger.exception(
-            "Error occurred while updating the reaction count API: %s",
-            e,
-        )
+    await gateway.update_reaction(reaction_update)
 
 
 @channel_router.channel_post(Command("delete"))
@@ -239,21 +199,8 @@ async def handle_delete_command(message: Message, bot: Bot):
         await bot.delete_message(
             chat_id=target_chat_id, message_id=target_message_id
         )
-        try:
-            async with httpx.AsyncClient(
-                timeout=settings.HTTP_TIMEOUT
-            ) as client:
-                api_url = (
-                    f"{settings.INNOSCREAM_API_URL}/"
-                    f"user_messages/{target_message_id}"
-                )
-                response = await client.delete(url=api_url)
-                response.raise_for_status()
-        except Exception as e:
-            logger.exception(
-                "Error occurred while deleting message from API: %s",
-                e,
-            )
+
+        await gateway.delete_user_message(target_message_id)
 
         # Also delete the command message
         await bot.delete_message(

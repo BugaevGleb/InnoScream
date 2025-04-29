@@ -1,10 +1,11 @@
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import httpx
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.sql.expression import cast
+from sqlalchemy.types import Date
 
 from app.api.dependencies import SessionDep
 from app.api.schemas import AllStatsResponse, DailyCount, WeeklyStatsResponse
@@ -93,7 +94,7 @@ async def get_best_message(session: SessionDep, today: date):
         "Message reaction sums %s for date %s", message_reaction_sums, today
     )
 
-    return max(message_reaction_sums, key=message_reaction_sums.get)
+    return max(message_reaction_sums, key=lambda x: message_reaction_sums[x])
 
 
 @router.get("/user_messages/{message_id}", response_model=UserMessage)
@@ -231,9 +232,9 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
 
     try:
         start_datetime_utc = datetime.combine(
-            target_date, datetime.time.min, tzinfo=datetime.timezone.utc
+            target_date, datetime.time.min, tzinfo=timezone.utc
         )
-        end_datetime_utc = start_datetime_utc + datetime.timedelta(days=1)
+        end_datetime_utc = start_datetime_utc + timedelta(days=1)
         logger.info(
             "Querying count from %s to %s",
             start_datetime_utc,
@@ -275,10 +276,10 @@ async def get_weekly_stats_via_daily():
     response_stats = []
 
     try:
-        now_utc = datetime.now(datetime.timezone.utc)
+        now_utc = datetime.now(timezone.utc)
         today_utc = now_utc.date()
         all_dates = [
-            today_utc - datetime.timedelta(days=i) for i in range(6, -1, -1)
+            today_utc - timedelta(days=i) for i in range(6, -1, -1)
         ]  # Past 6 days + today
     except Exception as e:
         logger.exception(
@@ -329,11 +330,11 @@ async def get_all_time_stats(session: SessionDep):
 
     stmt = (
         select(
-            cast(UserMessageDB.created_at, func.date()).label("date"),
+            cast(UserMessageDB.created_at, Date).label("date"),
             func.count(UserMessageDB.message_id).label("count"),
         )
-        .group_by(cast(UserMessageDB.created_at, func.date()))
-        .order_by(cast(UserMessageDB.created_at, func.date()))
+        .group_by(cast(UserMessageDB.created_at, Date))
+        .order_by(cast(UserMessageDB.created_at, Date))
     )
 
     result = await session.execute(stmt)
