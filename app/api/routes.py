@@ -1,5 +1,5 @@
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 import httpx
 from fastapi import APIRouter, HTTPException, status
@@ -232,7 +232,7 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
 
     try:
         start_datetime_utc = datetime.combine(
-            target_date, datetime.time.min, tzinfo=timezone.utc
+            target_date, time.min, tzinfo=timezone.utc
         )
         end_datetime_utc = start_datetime_utc + timedelta(days=1)
         logger.info(

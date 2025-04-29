@@ -17,7 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def scheduler(bot: Bot):
+async def pin_best_message_scheduler(bot: Bot):
     """Scheduler that pins the best message every day at 23:59."""
     target = datetime.now(timezone.utc).replace(
         hour=20, minute=59, second=0, microsecond=0
@@ -29,7 +29,7 @@ async def scheduler(bot: Bot):
 
         sleep_seconds = (target - now).total_seconds()
         logger.info(
-            "Target: %s. Sleeping for %s seconds...",
+            "Next pin best message run: %s. Sleeping for %s seconds...",
             target,
             sleep_seconds,
         )
@@ -59,7 +59,7 @@ async def weekly_chart_scheduler(bot: Bot):
         )
 
         # sleep_seconds = (target_time - now).total_seconds()
-        sleep_seconds = 10  # FIXME: replace this with above
+        sleep_seconds = 30  # FIXME: replace this with above
 
         if sleep_seconds < 0:
             logger.warning(
@@ -91,7 +91,7 @@ async def main() -> None:
     dp.include_router(router)
     dp.include_router(channel_router)
 
-    asyncio.create_task(scheduler(bot))
+    asyncio.create_task(pin_best_message_scheduler(bot))
     asyncio.create_task(weekly_chart_scheduler(bot))
 
     logger.info("Starting polling...")
