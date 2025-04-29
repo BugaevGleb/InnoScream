@@ -31,7 +31,7 @@ def fetch_background_image(
             img_response = client.get(response.json()["urls"]["regular"])
             img_response.raise_for_status()
         return Image.open(BytesIO(img_response.content)).convert("RGBA")
-    except httpx.HTTPStatusError as e:
+    except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
         logger.exception("Error fetching background image: %s", e)
     except KeyError:
         logger.exception("Error parsing Unsplash response (key missing)")
