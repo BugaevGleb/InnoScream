@@ -3,7 +3,7 @@ import os
 import platform
 from io import BytesIO
 
-import requests
+import httpx
 from PIL import Image, ImageDraw, ImageFont
 
 logger = logging.getLogger(__name__)
@@ -25,14 +25,13 @@ def fetch_background_image(
     )
     logger.info("Fetching image from: %s", url)
     try:
-        response = requests.get(url, timeout=15)
-        response.raise_for_status()
-        data = response.json()
-        image_url = data["urls"]["regular"]
-        img_response = requests.get(image_url, timeout=15)
-        img_response.raise_for_status()
+        with httpx.Client(timeout=15) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            img_response = client.get(response.json()["urls"]["regular"])
+            img_response.raise_for_status()
         return Image.open(BytesIO(img_response.content)).convert("RGBA")
-    except requests.exceptions.RequestException as e:
+    except httpx.HTTPStatusError as e:
         logger.exception("Error fetching background image: %s", e)
     except KeyError:
         logger.exception("Error parsing Unsplash response (key missing)")
