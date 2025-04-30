@@ -24,7 +24,7 @@ async def send_weekly_chart(bot: Bot):
             response.raise_for_status()
             stats_data = (
                 response.json()
-            )  # Expects {'stats': [{'day': 'Mon', 'count': ...}, ...]}
+            )
 
         if (
             not stats_data
@@ -56,7 +56,6 @@ configured. Cannot send weekly chart."
 
     except httpx.HTTPStatusError as e:
         logger.exception(f"HTTP error fetching weekly stats: {e}")
-        # Optionally notify admin about the error
         if settings.ADMIN_IDS:
             await bot.send_message(
                 settings.ADMIN_IDS[0], "Error generating weekly stress chart."
@@ -96,7 +95,7 @@ def generate_weekly_stress_chart_url(
                 {
                     "label": "Screams per Day",
                     "data": data,
-                    "backgroundColor": "rgba(54, 162, 235, 0.6)",  # Blue color
+                    "backgroundColor": "rgba(54, 162, 235, 0.6)",
                     "borderColor": "rgba(54, 162, 235, 1)",
                     "borderWidth": 1,
                 }
