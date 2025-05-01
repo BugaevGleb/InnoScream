@@ -10,6 +10,7 @@ __pycache__/
 *.so
 
 .history
+mutants
 
 # Distribution / packaging
 .Python
