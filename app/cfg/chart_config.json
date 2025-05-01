@@ -1,0 +1,32 @@
+{
+    "type": "bar",
+    "data": {
+        "datasets": [
+            {
+                "label": "Screams per Day",
+                "backgroundColor": "rgba(54, 162, 235, 0.6)",
+                "borderColor": "rgba(54, 162, 235, 1)",
+                "borderWidth": 1
+            }
+        ]
+    },
+    "options": {
+        "title": {
+            "display": true,
+            "text": "Weekly Stress Levels (Screams per Day)"
+        },
+        "scales": {
+            "yAxes": [
+                {
+                    "ticks": {
+                        "beginAtZero": true,
+                        "stepSize": 1
+                    }
+                }
+            ]
+        },
+        "legend": {
+            "display": false
+        }
+    }
+}

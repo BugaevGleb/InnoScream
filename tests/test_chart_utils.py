@@ -60,6 +60,7 @@ def test_generate_weekly_chart_url_missing():
 
 class DummyResponse:
     """Dummy response for async get."""
+
     def __init__(self, json_data, status_code=200, content=b""):
         self._json = json_data
         self.status_code = status_code
@@ -83,6 +84,7 @@ class DummyResponse:
 
 class DummyAsyncClient:
     """Dummy async client for HTTPX."""
+
     def __init__(self, response):
         self._response = response
 
@@ -194,3 +196,24 @@ async def test_send_weekly_chart_generic_exception(
     args, kwargs = dummy_bot.send_message.call_args
     text = args[1] if args and len(args) > 1 else kwargs.get("text", "")
     assert "Error generating weekly stress chart" in text
+
+
+def test_load_chart_config():
+    labels = ["Mon", "Tue", "Wed", "Thu", "Fri"]
+    data = [5, 10, 7, 9, 6]
+
+    config = wc.load_chart_config("app/cfg/chart_config.json", labels, data)
+
+    assert config['data']['labels'] == labels
+    assert config['data']['datasets'][0]['data'] == data
+
+    assert config['type'] == 'bar'
+    assert config['options']['title']['text'] == 'Weekly Stress '\
+        'Levels (Screams per Day)'
+
+
+def test_get_days_order():
+    """Test that get_days_order returns the expected list of days."""
+    days = wc.get_days_order()
+    expected_days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    assert days == expected_days

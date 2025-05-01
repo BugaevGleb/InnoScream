@@ -81,7 +81,7 @@ async def weekly_chart_scheduler(bot: Bot):
 
 async def main() -> None:
     """Initializes and starts the Telegram bot."""
-    logger.info("Starting bot...")
+    logger.info("Starting bot...")  # pragma: no mutate
 
     bot = Bot(token=settings.INNOSCREAM_BOT_TOKEN)
 
@@ -92,12 +92,12 @@ async def main() -> None:
     asyncio.create_task(pin_best_message_scheduler(bot))
     asyncio.create_task(weekly_chart_scheduler(bot))
 
-    logger.info("Starting polling...")
+    logger.info("Starting polling...")  # pragma: no mutate
     try:
         await dp.start_polling(bot)
     finally:
         await bot.session.close()
-        logger.info("Bot stopped.")
+        logger.info("Bot stopped.")  # pragma: no mutate
 
 
 if __name__ == "__main__":

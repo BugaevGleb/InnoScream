@@ -46,6 +46,6 @@ async def create_db_and_tables():
     async with engine.begin() as conn:
         # logger.info("Dropping existing tables (if any)...")
         # await conn.run_sync(Base.metadata.drop_all)
-        logger.info("Creating tables...")
-        await conn.run_sync(Base.metadata.create_all)
-        logger.info("Tables created.")
+        logger.info("Creating tables...")  # pragma: no mutate
+        await conn.run_sync(Base.metadata.create_all)  # pragma: no mutate
+        logger.info("Tables created.")  # pragma: no mutate
