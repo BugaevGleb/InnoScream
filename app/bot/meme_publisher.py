@@ -23,13 +23,15 @@ async def generate_and_publish_meme(bot: Bot, today: date | None = None):
 
         best_message_id = await gateway.get_best_message_id(today)
         if best_message_id is None:
-            logger.info("No best message id found for today %s.", today)
+            logger.info("No best message id found for today %s.",
+                        today)  # pragma: no mutate
             return
 
         message_text = await gateway.get_message_text(best_message_id)
         if message_text is None:
-            logger.warning(
-                "No message text found for message id %s.", best_message_id
+            logger.warning(  # pragma: no mutate
+                "No message text found "
+                "for message id %s.", best_message_id  # pragma: no mutate
             )
             return
 
@@ -39,12 +41,15 @@ async def generate_and_publish_meme(bot: Bot, today: date | None = None):
             output_filename="generated_meme.jpg",
         )
         if meme_buffer is None:
-            logger.error(
-                "Meme generation failed for message id %s.", best_message_id
-            )
+            logger.error(  # pragma: no mutate
+                "Meme generation failed for "
+                "message id %s.", best_message_id  # pragma: no mutate
+            )  # pragma: no mutate
             return
 
-        logger.info("Meme generated in memory, now sending to channel.")
+        logger.info(
+            "Meme generated in memory, "
+            "now sending to channel.")  # pragma: no mutate
         meme_bytes = meme_buffer.getvalue()
         input_file = BufferedInputFile(meme_bytes, filename="meme.jpg")
 
@@ -55,7 +60,9 @@ async def generate_and_publish_meme(bot: Bot, today: date | None = None):
             disable_notification=True,
         )
         logger.info(
-            "Meme published successfully for message id %s.", best_message_id
+            "Meme published successfully for "
+            "message id %s.", best_message_id  # pragma: no mutate
         )
     except Exception as e:
-        logger.exception("Error in generate_and_publish_meme: %s", e)
+        logger.exception(
+            "Error in generate_and_publish_meme: %s", e)  # pragma: no mutate

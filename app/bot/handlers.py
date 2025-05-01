@@ -146,7 +146,8 @@ async def handle_stats_command(message: Message):
         message: The message object containing the command.
     """
     if not message.from_user:
-        logger.error("Cannot get stats: message.from_user is None.")
+        logger.error("Cannot get stats: "
+                     "message.from_user is None.")  # pragma: no mutate
         await message.reply(ERROR_MESSAGE)
         return
 

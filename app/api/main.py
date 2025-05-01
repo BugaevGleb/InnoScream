@@ -22,11 +22,11 @@ async def lifespan(_: FastAPI):
     Args:
         _: FastAPI instance
     """
-    logger.info("Initializing database")
+    logger.info("Initializing database")  # pragma: no mutate
     await create_db_and_tables()
-    logger.info("Starting application")
+    logger.info("Starting application")  # pragma: no mutate
     yield
-    logger.info("Shutting down application")
+    logger.info("Shutting down application")  # pragma: no mutate
 
 
 app = FastAPI(

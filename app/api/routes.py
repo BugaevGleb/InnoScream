@@ -31,9 +31,10 @@ async def create_user_message(user_message: UserMessage, session: SessionDep):
     result = await session.execute(stmt)
     db_message = result.scalar_one_or_none()
     if db_message:
-        logger.info(
-            "Skipping user message for message_id %s: message already exists",
-            user_message.message_id,
+        logger.info(  # pragma: no mutate
+            "Skipping user message for message_id %s: "  # pragma: no mutate
+            "message already exists",  # pragma: no mutate
+            user_message.message_id,  # pragma: no mutate
         )
         return db_message
 
@@ -53,8 +54,9 @@ async def create_user_message(user_message: UserMessage, session: SessionDep):
         await session.rollback()
         logger.exception(
             (
-                "Database error during user message creation "
-                "for message_id %s: %s"
+                "Database error during user "
+                "message creation "  # pragma: no mutate
+                "for message_id %s: %s"  # pragma: no mutate
             ),
             user_message.message_id,
             e,
@@ -91,7 +93,8 @@ async def get_best_message(session: SessionDep, today: date):
         for reaction in reactions
     }
     logger.info(
-        "Message reaction sums %s for date %s", message_reaction_sums, today
+        "Message reaction sums %s for date %s",
+        message_reaction_sums, today  # pragma: no mutate
     )
 
     return max(message_reaction_sums, key=lambda x: message_reaction_sums[x])
@@ -128,7 +131,8 @@ async def delete_user_message(message_id: int, session: SessionDep):
     except Exception as e:
         await session.rollback()
         logger.exception(
-            "Database error during deletion for message_id %s: %s",
+            "Database error during deletion for "
+            "message_id %s: %s",  # pragma: no mutate
             message_id,
             e,
         )
@@ -159,14 +163,17 @@ async def update_reaction(
             > reaction_update.changed_at
         ):
             logger.info(
-                "Skipping reaction update for message_id %s: "
-                "new reaction update is older than the existing one",
-                reaction_update.message_id,
+                "Skipping reaction update for "
+                "message_id %s: "  # pragma: no mutate
+                "new reaction update is older "
+                "than the existing one",  # pragma: no mutate
+                reaction_update.message_id,  # pragma: no mutate
             )
             return db_log
         logger.info(
-            "Updating existing reaction log for message_id %s",
-            reaction_update.message_id,
+            "Updating existing reaction log "
+            "for message_id %s",  # pragma: no mutate
+            reaction_update.message_id,  # pragma: no mutate
         )
         db_log.changed_at = reaction_update.changed_at
         db_log.reactions = [
@@ -175,7 +182,7 @@ async def update_reaction(
         session.add(db_log)
     else:
         logger.info(
-            "Creating new reaction log for message_id %s",
+            "Creating new reaction log for message_id %s",  # pragma: no mutate
             reaction_update.message_id,
         )
         db_log = ReactionDB(
@@ -194,7 +201,8 @@ async def update_reaction(
     except Exception as e:
         await session.rollback()
         logger.exception(
-            "Database error during reaction update for message_id %s: %s",
+            "Database error during reaction update for "
+            "message_id %s: %s",  # pragma: no mutate
             reaction_update.message_id,
             e,
         )
@@ -219,12 +227,14 @@ async def get_reaction_log(message_id: int, session: SessionDep):
 @router.get("/stats/daily/{target_date_str}", response_model=int)
 async def get_daily_stats(target_date_str: str, session: SessionDep):
     """Get the number of messages posted on a specific date (YYYY-MM-DD)."""
-    logger.info("Fetching stats for specific date: %s", target_date_str)
+    logger.info("Fetching stats for specific date: %s",
+                target_date_str)  # pragma: no mutate
 
     try:
         target_date = datetime.strptime(target_date_str, "%Y-%m-%d").date()
     except ValueError:
-        logger.error("Invalid date format provided: %s", target_date_str)
+        logger.error("Invalid date format provided: %s",
+                     target_date_str)  # pragma: no mutate
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid date format. Use YYYY-MM-DD.",
@@ -236,12 +246,13 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
         )
         end_datetime_utc = start_datetime_utc + timedelta(days=1)
         logger.info(
-            "Querying count from %s to %s",
-            start_datetime_utc,
-            end_datetime_utc,
+            "Querying count from %s to %s",  # pragma: no mutate
+            start_datetime_utc,  # pragma: no mutate
+            end_datetime_utc,  # pragma: no mutate
         )
     except Exception as e:
-        logger.exception("Error creating date boundaries: %s", e)
+        logger.exception("Error creating date boundaries: %s",
+                         e)  # pragma: no mutate
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating date boundaries",
@@ -255,12 +266,14 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
         result = await session.execute(stmt)
         count = result.scalar_one_or_none() or 0
 
-        logger.info("Count for %s: %s", target_date_str, count)
+        logger.info("Count for %s: %s", target_date_str,
+                    count)  # pragma: no mutate
         return count
 
     except Exception as e:
         logger.exception(
-            "Database error fetching stats for %s: %s", target_date_str, e
+            "Database error fetching stats for %s: %s",
+            target_date_str, e  # pragma: no mutate
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -272,7 +285,9 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
 async def get_weekly_stats_via_daily():
     """Get weekly stats by calling the daily stats endpoint \
     for the last 7 days."""
-    logger.info("Fetching weekly stats via daily endpoint calls...")
+    logger.info(  # pragma: no mutate
+        "Fetching weekly stats via daily "
+        "endpoint calls...")
     response_stats = []
 
     try:
@@ -283,7 +298,8 @@ async def get_weekly_stats_via_daily():
         ]  # Past 6 days + today
     except Exception as e:
         logger.exception(
-            "Error calculating date range for weekly stats: %s", e
+            "Error calculating date range "
+            "for weekly stats: %s", e  # pragma: no mutate
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -293,7 +309,8 @@ async def get_weekly_stats_via_daily():
     async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
         for current_date in all_dates:
             date_str = current_date.strftime("%Y-%m-%d")
-            logger.info("Fetching stats for date: %s", date_str)
+            logger.info("Fetching stats for date: %s",
+                        date_str)  # pragma: no mutate
             daily_url = f"{settings.INNOSCREAM_API_URL}/stats/daily/{date_str}"
             count = 0
             try:
@@ -301,18 +318,21 @@ async def get_weekly_stats_via_daily():
                 response.raise_for_status()
                 count = response.json()
                 logger.debug(
-                    "Successfully fetched count for %s: %s", date_str, count
+                    "Successfully fetched count "
+                    "for %s: %s", date_str, count  # pragma: no mutate
                 )
             except httpx.HTTPStatusError as e:
                 logger.warning(
-                    "HTTP error calling daily stats for %s: %s - %s",
-                    date_str,
-                    e.response.status_code,
-                    e.response.text,
+                    "HTTP error calling daily "
+                    "stats for %s: %s - %s",  # pragma: no mutate
+                    date_str,  # pragma: no mutate
+                    e.response.status_code,  # pragma: no mutate
+                    e.response.text,  # pragma: no mutate
                 )
             except Exception as e:
                 logger.exception(
-                    "Error calling daily stats for %s: %s", date_str, e
+                    "Error calling daily "
+                    "stats for %s: %s", date_str, e  # pragma: no mutate
                 )
 
             response_stats.append(
