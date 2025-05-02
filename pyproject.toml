@@ -34,7 +34,7 @@ pytest-asyncio = "^0.21.0"
 flake8 = "^7.2.0"
 bandit = "^1.8.3"
 locust = "^2.35.0"
-mutmut = { git = "https://github.com/boxed/mutmut", branch = "main" }
+mutmut = "3.2.3"
 pydocstyle = "^6.3.0"
 radon = "^6.0.1"
 pre-commit = "^4.2.0"
