@@ -4,13 +4,11 @@ Anonymous Stress Relief Platform for Students
 
 ## Table of Contents
 
-- [License](#license)
 - [Negotiation on the Project](#negotiation-on-the-project)
-- [Project Functionality and Usage](#project-functionality)
+- [Project Functionality and Usage](#project-functionality-and-usage)
 - [Quality Metrics](#quality-metrics)
-- [Roles Distribution](#roles-distribution)
+- [Tasks Distribution](#tasks-distribution)
 - [Lessons Learned](#lessons-learned)
-- [Contact](#contact)
 
 ## Negotiation on the Project
 
@@ -25,7 +23,7 @@ During the first week of the work on this project we discussed all features and 
 
 ## Getting Started
 
-A brief overview of how to set up the project locally for development and testing.
+Aт overview of how to set up the project locally for development and testing.
 
 1. **Clone the Repository:**  
    ```bash
@@ -86,65 +84,65 @@ A summary of the key features offered by the project and its usage.
 This is a description of all required quality metrics (project treshold, our result, and how to measured/test it):
 
 - **Code style:**  
-  *Tool:* Flake8
-  *Treshold:* Zero warnings
-  *Our result:* Zero warnings
-  *How we measured it:* Using Flake8 in pre-commit hook and CI
+  *Tool:* Flake8  
+  *Treshold:* Zero warnings  
+  *Our result:* Zero warnings  
+  *How we measured it:* Using Flake8 in pre-commit hook and CI  
 
 - **Documentation:**  
-  *Tool:* Pydocstyle
-  *Treshold:* Docstrings for all functions
-  *Our result:* Docstrings for all functions
-  *How we measured it:* Using Pydocstyle in pre-commit hook and CI
+  *Tool:* Pydocstyle  
+  *Treshold:* Docstrings for all functions  
+  *Our result:* Docstrings for all functions  
+  *How we measured it:* Using Pydocstyle in pre-commit hook and CI  
 
 - **Code complexity:**  
-  *Tool:* Radon cc
-  *Treshold:* Code complexity ≤ 10
-  *Our result:* Max code complexity is 9
-  *How we measured it:* Using Radon in pre-commit hook and CI
+  *Tool:* Radon cc  
+  *Treshold:* Code complexity ≤ 10  
+  *Our result:* Max code complexity is 9  
+  *How we measured it:* Using Radon in pre-commit hook and CI  
 
 - **Test coverage:**  
-  *Tool:* Pytest
-  *Treshold:* Test coverage ≥ 60%
-  *Our result:* Line coverage is 61%, Branch coverage is 61%, Total coverage (from pytest) is 61.22%
-  *How we measured it:* Using `poetry run pytest --cov=app --cov-report=term-missing` and `poetry run pytest --cov=app --cov-report=term-missing --cov-branch` command and `poetry run pytest --cov=app --cov-fail-under=60` step in GitHub Actions.
+  *Tool:* Pytest  
+  *Treshold:* Test coverage ≥ 60%  
+  *Our result:* Line coverage is 61%, Branch coverage is 61%, Total coverage (from pytest) is 61.22%  
+  *How we measured it:* Using `poetry run pytest --cov=app --cov-report=term-missing` and `poetry run pytest --cov=app --cov-report=term-missing --cov-branch` command and `poetry run pytest --cov=app --cov-fail-under=60` step in GitHub Actions.  
 
 - **Mutation testing:**  
-  *Tool:* Mutmut
-  *Treshold:* ≥ 80% mutants killed
-  *Our result:* 84% mutants killed
-  *How we measured it:* We created setup.cfg for mutmut and ran commands `poetry run mutmut run` and `poetry run mutmut browse`.
+  *Tool:* Mutmut  
+  *Treshold:* ≥ 80% mutants killed  
+  *Our result:* 84% mutants killed  
+  *How we measured it:* We created setup.cfg for mutmut and ran commands `poetry run mutmut run` and `poetry run mutmut browse`.  
 
 - **Bot response time:**  
-  *Tool:* Locust
-  *Treshold:* Bot response time ≤ 500 ms under 100 RPS
-  *Our result:* ---
-  *How we measured it:* ---
+  *Tool:* Locust  
+  *Treshold:* Bot response time ≤ 500 ms under 100 RPS  
+  *Our result:* ---  
+  *How we measured it:* ---  
 
 - **SQL queries time:**  
-  *Tool:* Python
-  *Treshold:* SQL queries ≤ 50 ms
-  *Our result:* 0.336 ms at most
-  *How we measured it:* We fulfill a database with 300 messages and 300 reactions (approved size by our project master) using [this script](https://github.com/BugaevGleb/InnoScream/blob/main/scripts/dummy_db_data_generator.py). Then we measured all presented in the project SQL queries using [this script](https://github.com/BugaevGleb/InnoScream/blob/main/scripts/db_query_time_analysis.py). These are obtained results:
-    - get_user_message_by_message_id
+  *Tool:* Python  
+  *Treshold:* SQL queries ≤ 50 ms  
+  *Our result:* 0.336 ms at most  
+  *How we measured it:* We fulfill a database with 300 messages and 300 reactions (approved size by our project master) using [this script](https://github.com/BugaevGleb/InnoScream/blob/main/scripts/dummy_db_data_generator.py). Then we measured all presented in the project SQL queries using [this script](https://github.com/BugaevGleb/InnoScream/blob/main/scripts/db_query_time_analysis.py). These are obtained results:  
+    - get_user_message_by_message_id  
     Average time for 1000 queries: 0.195 milliseconds
 
-    - get_best_message
+    - get_best_message  
     Average time for 1000 queries: 0.333 milliseconds
 
-    - get_reaction_by_message_id
+    - get_reaction_by_message_id  
     Average time for 1000 queries: 0.219 milliseconds
 
-    - get_count_of_messages_by_date
+    - get_count_of_messages_by_date  
     Average time for 1000 queries: 0.323 milliseconds
 
-    - get_all_time_daily_stats
+    - get_all_time_daily_stats  
     Average time for 1000 queries: 0.336 milliseconds
 
-    - get_user_stats
+    - get_user_stats  
     Average time for 1000 queries: 0.256 milliseconds
 
-  System configuration:
+  System configuration:  
     - CPU: Intel Core i7-13620H
     - RAM: 16 GB
     - SSD: NVMe SAMSUNG MZVMA1T0HCLD-00BTW
@@ -152,34 +150,34 @@ This is a description of all required quality metrics (project treshold, our res
   *Note:* Initially by the project description EXPLAIN ANALYZE command was supposed to be used, but we found that SQLite has no such command. So, we decides (and got an approval from our project master) to measure it from Python module.
 
 - **Vulnerabilities:**  
-  *Tool:* Bandit
-  *Treshold:* No critical vulnerabilities
-  *Our result:* No critical vulnerabilities (with HIGH severity-level by Bandit)
-  *How we measured it:* Using Bandit in pre-commit hook and CI, configured on failing pipeline if HIGH severity-level vulnerabilities found
+  *Tool:* Bandit  
+  *Treshold:* No critical vulnerabilities  
+  *Our result:* No critical vulnerabilities (with HIGH severity-level by Bandit)  
+  *How we measured it:* Using Bandit in pre-commit hook and CI, configured on failing pipeline if HIGH severity-level vulnerabilities found  
 
 - **Data anonymity:**  
-  *Tool:* Bandit / Manual review
-  *Treshold:* user_id hashing
-  *Our result:* user_id hashing using sha256
-  *How we measured it:* Using Bandit in pre-commit hook and CI + Manual review (using hashlib.sha256)
+  *Tool:* Bandit / Manual review  
+  *Treshold:* user_id hashing  
+  *Our result:* user_id hashing using sha256  
+  *How we measured it:* Using Bandit in pre-commit hook and CI + Manual review (using hashlib.sha256)  
 
 ## Tasks Distribution
 
 During the project we strived to divide tasks equally among all 5 team members, so each team member contributed at least one feature to the project and made at least one quality metric measurement (or wrote tests). This is a distribution of tasks among team members:
 
-- **Dmitriy Okoneshnikov:**
+- **Dmitriy Okoneshnikov:**  
   Base bot and api functionality (messages sending, reactions, database connection), automated quality gates (GitHub Actions), pre-commit hook (to preserve code style using flake8+pydocstyle, security using bandit and complexity using radon cc).
 
-- **Gleb Bugaev:**
+- **Gleb Bugaev:**  
   Team lead, meme generation feature, unit tests (pytest), quality and functionalities report.
 
-- **Milana Sirozhova:**
+- **Milana Sirozhova:**  
   Pinning most-reacted message feature, sql queries time measuting, project presentation.
 
-- **Nail Minnenullin:**
+- **Nail Minnenullin:**  
   Posts deletion (by admins) feature, unit tests (mutmut).
 
-- **Vladislav Bolshakov:**
+- **Vladislav Bolshakov:**  
   Statistics and weekly stress graph features, preformance measuring (locust).
 
 ## Lessons Learned
