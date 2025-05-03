@@ -4,8 +4,6 @@ from datetime import date, datetime, time, timedelta, timezone
 import httpx
 from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import func, select
-from sqlalchemy.sql.expression import cast
-from sqlalchemy.types import Date
 
 from app.api.dependencies import SessionDep
 from app.api.schemas import AllStatsResponse, DailyCount, WeeklyStatsResponse
@@ -94,7 +92,8 @@ async def get_best_message(session: SessionDep, today: date):
     }
     logger.info(
         "Message reaction sums %s for date %s",
-        message_reaction_sums, today  # pragma: no mutate
+        message_reaction_sums,
+        today,  # pragma: no mutate
     )
 
     return max(message_reaction_sums, key=lambda x: message_reaction_sums[x])
@@ -227,14 +226,16 @@ async def get_reaction_log(message_id: int, session: SessionDep):
 @router.get("/stats/daily/{target_date_str}", response_model=int)
 async def get_daily_stats(target_date_str: str, session: SessionDep):
     """Get the number of messages posted on a specific date (YYYY-MM-DD)."""
-    logger.info("Fetching stats for specific date: %s",
-                target_date_str)  # pragma: no mutate
+    logger.info(
+        "Fetching stats for specific date: %s", target_date_str
+    )  # pragma: no mutate
 
     try:
         target_date = datetime.strptime(target_date_str, "%Y-%m-%d").date()
     except ValueError:
-        logger.error("Invalid date format provided: %s",
-                     target_date_str)  # pragma: no mutate
+        logger.error(
+            "Invalid date format provided: %s", target_date_str
+        )  # pragma: no mutate
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid date format. Use YYYY-MM-DD.",
@@ -251,8 +252,9 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
             end_datetime_utc,  # pragma: no mutate
         )
     except Exception as e:
-        logger.exception("Error creating date boundaries: %s",
-                         e)  # pragma: no mutate
+        logger.exception(
+            "Error creating date boundaries: %s", e
+        )  # pragma: no mutate
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating date boundaries",
@@ -266,14 +268,16 @@ async def get_daily_stats(target_date_str: str, session: SessionDep):
         result = await session.execute(stmt)
         count = result.scalar_one_or_none() or 0
 
-        logger.info("Count for %s: %s", target_date_str,
-                    count)  # pragma: no mutate
+        logger.info(
+            "Count for %s: %s", target_date_str, count
+        )  # pragma: no mutate
         return count
 
     except Exception as e:
         logger.exception(
             "Database error fetching stats for %s: %s",
-            target_date_str, e  # pragma: no mutate
+            target_date_str,
+            e,  # pragma: no mutate
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -286,8 +290,8 @@ async def get_weekly_stats_via_daily():
     """Get weekly stats by calling the daily stats endpoint \
     for the last 7 days."""
     logger.info(  # pragma: no mutate
-        "Fetching weekly stats via daily "
-        "endpoint calls...")
+        "Fetching weekly stats via daily endpoint calls..."
+    )
     response_stats = []
 
     try:
@@ -298,8 +302,8 @@ async def get_weekly_stats_via_daily():
         ]  # Past 6 days + today
     except Exception as e:
         logger.exception(
-            "Error calculating date range "
-            "for weekly stats: %s", e  # pragma: no mutate
+            "Error calculating date range for weekly stats: %s",
+            e,  # pragma: no mutate
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -309,8 +313,9 @@ async def get_weekly_stats_via_daily():
     async with httpx.AsyncClient(timeout=settings.HTTP_TIMEOUT) as client:
         for current_date in all_dates:
             date_str = current_date.strftime("%Y-%m-%d")
-            logger.info("Fetching stats for date: %s",
-                        date_str)  # pragma: no mutate
+            logger.info(
+                "Fetching stats for date: %s", date_str
+            )  # pragma: no mutate
             daily_url = f"{settings.INNOSCREAM_API_URL}/stats/daily/{date_str}"
             count = 0
             try:
@@ -318,8 +323,9 @@ async def get_weekly_stats_via_daily():
                 response.raise_for_status()
                 count = response.json()
                 logger.debug(
-                    "Successfully fetched count "
-                    "for %s: %s", date_str, count  # pragma: no mutate
+                    "Successfully fetched count for %s: %s",
+                    date_str,
+                    count,  # pragma: no mutate
                 )
             except httpx.HTTPStatusError as e:
                 logger.warning(
@@ -331,8 +337,9 @@ async def get_weekly_stats_via_daily():
                 )
             except Exception as e:
                 logger.exception(
-                    "Error calling daily "
-                    "stats for %s: %s", date_str, e  # pragma: no mutate
+                    "Error calling daily stats for %s: %s",
+                    date_str,
+                    e,  # pragma: no mutate
                 )
 
             response_stats.append(
@@ -348,20 +355,21 @@ async def get_all_time_stats(session: SessionDep):
     """Get the number of messages posted per day for all time."""
     logger.info("Fetching all-time daily stats...")
 
+    date_col = func.date(UserMessageDB.created_at).label("date")
     stmt = (
         select(
-            cast(UserMessageDB.created_at, Date).label("date"),
+            date_col,
             func.count(UserMessageDB.message_id).label("count"),
         )
-        .group_by(cast(UserMessageDB.created_at, Date))
-        .order_by(cast(UserMessageDB.created_at, Date))
+        .group_by(date_col)
+        .order_by(date_col)
     )
 
     result = await session.execute(stmt)
     daily_counts_db = result.all()
 
     response_stats = [
-        DailyCount(day=db_date.strftime("%Y-%m-%d"), count=count)
+        DailyCount(day=db_date, count=count)
         for db_date, count in daily_counts_db
     ]
 
