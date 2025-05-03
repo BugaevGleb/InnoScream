@@ -31,7 +31,7 @@ jobs:
           INNOSCREAM_BOT_TOKEN: ${{ secrets.INNOSCREAM_BOT_TOKEN }}
           INNOSCREAM_CHANNEL_ID: ${{ secrets.INNOSCREAM_CHANNEL_ID }}
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-        run: poetry run pytest
+        run: poetry run pytest --cov=app --cov-fail-under=60
 
       - name: Run bandit
         run: poetry run bandit -r app -lll -c pyproject.toml
