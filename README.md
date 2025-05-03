@@ -191,3 +191,6 @@ During the process of project work we learned several new insides:
 
 - **Tasks Dependencies:**  
   We faced up with a problem of tasks dependencies (for example, meme generation feature can be done only after most-reacted message finding feature) and different team members work schedule. To neglect this problem we met online each week and defined deadlines for each feature/activity.
+
+- **SQLite queries testing:**  
+  Initially we were intended to measure SQL queries execution time with EXPLAIN ANALYZE. However, during the testing stage of the project work we found out that SQLite has no EXPLAIN ANALYZE at all (according to its documentation). Therefore, we agreed with our project master to measure queries time using Python `timeit` library.
