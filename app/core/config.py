@@ -14,8 +14,6 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str = "sqlite+aiosqlite:///./db.sqlite3"
 
-    INNOSCREAM_API_KEY: str
-
     PROJECT_NAME: str = "InnoScream"
     PROJECT_DESCRIPTION: str = (
         "Toy project for Innopolis University S25 "
