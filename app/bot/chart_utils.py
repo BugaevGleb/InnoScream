@@ -21,9 +21,7 @@ async def send_weekly_chart(bot: Bot):
                 url=f"{settings.INNOSCREAM_API_URL}/stats/weekly",
             )
             response.raise_for_status()
-            stats_data = (
-                response.json()
-            )
+            stats_data = response.json()
 
         if (
             not stats_data
@@ -41,7 +39,7 @@ async def send_weekly_chart(bot: Bot):
             await bot.send_message(
                 chat_id=target_chat_id,
                 text=f'Here is the <a href="{chart_url}">weekly stress" '
-                'chart</a>.',
+                "chart</a>.",
                 parse_mode="HTML",
             )
             logger.info(  # pragma: no mutate
@@ -103,15 +101,16 @@ def get_days_order() -> list[str]:
     return ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
-def load_chart_config(filename: str, labels: list[str],
-                      data: list[int]) -> dict:
+def load_chart_config(
+    filename: str, labels: list[str], data: list[int | str]
+) -> dict:
     """Loads the chart configuration from a JSON file and injects data."""
-    with open(filename, 'r') as f:  # pragma: no mutate
+    with open(filename, "r") as f:  # pragma: no mutate
         chart_config = json.load(f)
 
     # Inject dynamic labels and data into the loaded template
-    chart_config['data']['labels'] = labels
-    chart_config['data']['datasets'][0]['data'] = data
+    chart_config["data"]["labels"] = labels
+    chart_config["data"]["datasets"][0]["data"] = data
 
     return chart_config
 
