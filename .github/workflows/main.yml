@@ -27,6 +27,10 @@ jobs:
         run: poetry run pydocstyle
 
       - name: Run pytest
+        env:
+          INNOSCREAM_BOT_TOKEN: ${{ secrets.INNOSCREAM_BOT_TOKEN }}
+          INNOSCREAM_CHANNEL_ID: ${{ secrets.INNOSCREAM_CHANNEL_ID }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
         run: poetry run pytest
 
       - name: Run bandit
