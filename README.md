@@ -113,7 +113,7 @@ This is a description of all required quality metrics (project treshold, our res
   *Tool:* Mutmut
   *Treshold:* ≥ 80% mutants killed
   *Our result:* 84% mutants killed
-  *How we measured it:* ---
+  *How we measured it:* We created setup.cfg for mutmut and ran commands `poetry run mutmut run` and `poetry run mutmut browse`.
 
 - **Bot response time:**  
   *Tool:* Locust
@@ -124,8 +124,31 @@ This is a description of all required quality metrics (project treshold, our res
 - **SQL queries time:**  
   *Tool:* Python
   *Treshold:* SQL queries ≤ 50 ms
-  *Our result:* ---
-  *How we measured it:* ---
+  *Our result:* 0.336 ms at most
+  *How we measured it:* We fulfill a database with 300 messages and 300 reactions (approved size by our project master) using [this script](https://github.com/BugaevGleb/InnoScream/blob/main/scripts/dummy_db_data_generator.py). Then we measured all presented in the project SQL queries using [this script](https://github.com/BugaevGleb/InnoScream/blob/main/scripts/db_query_time_analysis.py). These are obtained results:
+    - get_user_message_by_message_id
+    Average time for 1000 queries: 0.195 milliseconds
+
+    - get_best_message
+    Average time for 1000 queries: 0.333 milliseconds
+
+    - get_reaction_by_message_id
+    Average time for 1000 queries: 0.219 milliseconds
+
+    - get_count_of_messages_by_date
+    Average time for 1000 queries: 0.323 milliseconds
+
+    - get_all_time_daily_stats
+    Average time for 1000 queries: 0.336 milliseconds
+
+    - get_user_stats
+    Average time for 1000 queries: 0.256 milliseconds
+
+  System configuration:
+    - CPU: Intel Core i7-13620H
+    - RAM: 16 GB
+    - SSD: NVMe SAMSUNG MZVMA1T0HCLD-00BTW
+
   *Note:* Initially by the project description EXPLAIN ANALYZE command was supposed to be used, but we found that SQLite has no such command. So, we decides (and got an approval from our project master) to measure it from Python module.
 
 - **Vulnerabilities:**  
