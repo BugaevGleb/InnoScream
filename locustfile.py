@@ -12,8 +12,7 @@ class ApiUser(HttpUser):
 
     @task
     def create_message(self):
-        """Simulates users sending messages to the bot's API endpoint.
-        """
+        """Simulates users sending messages to the bot's API endpoint."""
         # Generate unique data for each request
         user_telegram_id = random.randint(1000000, 9999999)
         hashed_user_id = hashlib.sha256(
