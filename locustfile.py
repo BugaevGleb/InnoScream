@@ -4,10 +4,11 @@ import hashlib
 from datetime import datetime, timezone
 from locust import HttpUser, task, constant_throughput
 
+
 class ApiUser(HttpUser):
     # Each user will send 1 request per second
     wait_time = constant_throughput(1)
-    host = "http://127.0.0.1:8000" # Default API host, can be overridden in Locust UI or CLI
+    host = "http://127.0.0.1:8000"
 
     @task
     def create_message(self):
@@ -30,4 +31,7 @@ class ApiUser(HttpUser):
 
         headers = {'Content-Type': 'application/json'}
 
-        self.client.post("/user_messages", json=payload, headers=headers, name="/user_messages") 
+        self.client.post(
+            "/user_messages", json=payload,
+            headers=headers, name="/user_messages"
+        )
