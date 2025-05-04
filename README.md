@@ -116,7 +116,7 @@ This is a description of all required quality metrics (project treshold, our res
 - **Bot response time:**  
   *Tool:* Locust  
   *Treshold:* Bot response time ≤ 500 ms under 100 RPS
-  *Our result:* ([See Locust Results](https://htmlpreview.github.io/?https://github.com/BugaevGleb/InnoScream/blob/locust/locust_result.html))
+  *Our result:* ([See Locust Results](locust_result.html))
 
   *How we measured it:* We executed the Locust performance test defined in [`locustfile.py`](locustfile.py), simulating 100 concurrent users to achieve a load of approximately 100 requests per second (RPS) targeting the `POST /user_messages` API endpoint. **This simulates the API load generated when users execute the `/scream` command in the bot.**
 
